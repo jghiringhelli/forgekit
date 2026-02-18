@@ -59,7 +59,7 @@ export async function scaffoldProjectHandler(
     dryRun: args.dry_run,
   });
 
-  // Load and compose templates (respects forgekit.yaml config if present)
+  // Load and compose templates (respects forgecraft.yaml config if present)
   const userConfig = loadUserOverrides(args.project_dir);
   const templateSets = await loadAllTemplatesWithExtras(
     undefined,

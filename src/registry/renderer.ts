@@ -30,7 +30,7 @@ export function renderClaudeMd(
   blocks: ClaudeMdBlock[],
   context: RenderContext,
 ): string {
-  const header = buildForgeKitHeader(context);
+  const header = buildForgeCraftHeader(context);
   const sections: string[] = ["# CLAUDE.md\n", header];
 
   for (const block of blocks) {
@@ -42,16 +42,16 @@ export function renderClaudeMd(
 }
 
 /**
- * Build the ForgeKit metadata header for CLAUDE.md.
- * This section tells Claude that the project is managed by ForgeKit
+ * Build the ForgeCraft metadata header for CLAUDE.md.
+ * This section tells Claude that the project is managed by ForgeCraft
  * and what tools are available for maintenance.
  */
-function buildForgeKitHeader(context: RenderContext): string {
+function buildForgeCraftHeader(context: RenderContext): string {
   const date = new Date().toISOString().split("T")[0];
   const tagList = context.tags.map((t) => `\`${t}\``).join(", ");
   return (
-    `<!-- ForgeKit managed | ${date} -->\n` +
-    `> **This project is managed by [ForgeKit](https://github.com/jghiringhelli/forgekit).**\n` +
+    `<!-- ForgeCraft managed | ${date} -->\n` +
+    `> **This project is managed by [ForgeCraft](https://github.com/jghiringhelli/forgecraft-mcp).**\n` +
     `> Tags: ${tagList}\n` +
     `>\n` +
     `> Available commands:\n` +
@@ -61,7 +61,7 @@ function buildForgeKitHeader(context: RenderContext): string {
     `> - \`review_project\` — structured code review checklist\n` +
     `> - \`scaffold_project\` — generate folders, hooks, docs skeletons\n` +
     `>\n` +
-    `> Config: \`forgekit.yaml\` | Tier system: core → recommended → optional\n`
+    `> Config: \`forgecraft.yaml\` | Tier system: core → recommended → optional\n`
   );
 }
 
@@ -172,7 +172,7 @@ export function renderStatusMd(context: RenderContext): string {
 
 ## Last Updated: ${new Date().toISOString().split("T")[0]}
 ## Session Summary
-Project initialized with Forgekit. Tags: ${context.tags.join(", ")}.
+Project initialized with ForgeCraft. Tags: ${context.tags.join(", ")}.
 
 ## Project Structure
 \`\`\`

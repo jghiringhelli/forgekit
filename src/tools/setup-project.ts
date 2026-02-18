@@ -2,7 +2,7 @@
  * setup_project tool handler.
  *
  * Unified entry point that analyzes a project, detects tags,
- * loads/creates a forgekit.yaml config, and orchestrates scaffolding.
+ * loads/creates a forgecraft.yaml config, and orchestrates scaffolding.
  * Works for both new and existing projects.
  */
 
@@ -11,7 +11,7 @@ import { existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import yaml from "js-yaml";
 import { ALL_TAGS, CONTENT_TIERS } from "../shared/types.js";
-import type { Tag, ContentTier, ForgeKitConfig } from "../shared/types.js";
+import type { Tag, ContentTier, ForgeCraftConfig } from "../shared/types.js";
 import { analyzeProject, analyzeDescription } from "../analyzers/package-json.js";
 import { checkCompleteness } from "../analyzers/completeness.js";
 import { loadAllTemplatesWithExtras, loadUserOverrides } from "../registry/loader.js";
@@ -60,7 +60,7 @@ interface SetupAnalysis {
   readonly isNewProject: boolean;
   readonly detectedTags: Tag[];
   readonly tagEvidence: Record<string, string[]>;
-  readonly existingConfig: ForgeKitConfig | null;
+  readonly existingConfig: ForgeCraftConfig | null;
   readonly completenessGaps: string[];
   readonly hasClaude: boolean;
   readonly hasStatusMd: boolean;
@@ -104,7 +104,7 @@ export async function setupProjectHandler(
   }
 
   // ── Step 7: Write config file ──────────────────────────────────
-  const configPath = join(projectDir, "forgekit.yaml");
+  const configPath = join(projectDir, "forgecraft.yaml");
   writeFileSync(configPath, configYaml, "utf-8");
 
   // ── Step 8: Generate CLAUDE.md if needed ───────────────────────
@@ -222,15 +222,15 @@ function determineTags(
 // ── Config Builder ───────────────────────────────────────────────────
 
 /**
- * Build a ForgeKitConfig from analysis results and user preferences.
+ * Build a ForgeCraftConfig from analysis results and user preferences.
  * Preserves existing config fields when present.
  */
 function buildConfig(
-  existing: ForgeKitConfig | null,
+  existing: ForgeCraftConfig | null,
   tags: Tag[],
   tier: ContentTier,
   projectName: string,
-): ForgeKitConfig {
+): ForgeCraftConfig {
   return {
     projectName: existing?.projectName ?? projectName,
     tags: tags,
@@ -299,7 +299,7 @@ function buildDryRunOutput(
   text += `- NFRs: ${coreNfr} core, ${recNfr} recommended, ${optNfr} optional\n\n`;
 
   // Config preview
-  text += `## Generated Config (forgekit.yaml)\n`;
+  text += `## Generated Config (forgecraft.yaml)\n`;
   text += `\`\`\`yaml\n${configYaml}\`\`\`\n\n`;
 
   // Gaps
@@ -309,7 +309,7 @@ function buildDryRunOutput(
     text += "\n\n";
   }
 
-  text += `_Run again with dry_run=false to write forgekit.yaml and generate files._`;
+  text += `_Run again with dry_run=false to write forgecraft.yaml and generate files._`;
   return text;
 }
 
@@ -329,7 +329,7 @@ function buildSetupOutput(
   text += `**Content Tier:** ${tier}\n\n`;
 
   text += `## Files Written\n`;
-  text += `- forgekit.yaml — project configuration\n`;
+  text += `- forgecraft.yaml — project configuration\n`;
   text += `- CLAUDE.md — ${claudeAction}\n\n`;
 
   text += `## Template Summary\n`;
@@ -338,7 +338,7 @@ function buildSetupOutput(
   text += `- ${composed.hooks.length} hooks available\n`;
   text += `- ${composed.reviewBlocks.length} review checklist blocks available\n\n`;
 
-  text += `## Config (forgekit.yaml)\n`;
+  text += `## Config (forgecraft.yaml)\n`;
   text += `\`\`\`yaml\n${configYaml}\`\`\`\n\n`;
 
   // Next steps - adapt based on what exists
@@ -351,11 +351,11 @@ function buildSetupOutput(
   if (analysis.completenessGaps.includes("prd_exists")) {
     steps.push("Create docs/PRD.md with your project requirements");
   }
-  steps.push("Adjust forgekit.yaml to add/exclude specific content blocks");
+  steps.push("Adjust forgecraft.yaml to add/exclude specific content blocks");
   steps.push("Use `refresh_project` later if project scope changes");
 
   if (tier === "core") {
-    steps.push("Upgrade tier to 'recommended' when ready for more patterns: edit forgekit.yaml");
+    steps.push("Upgrade tier to 'recommended' when ready for more patterns: edit forgecraft.yaml");
   }
 
   text += steps.map((s, i) => `${i + 1}. ${s}`).join("\n");

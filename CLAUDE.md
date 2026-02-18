@@ -1,14 +1,14 @@
 # CLAUDE.md
 
 ## Project Identity
-- **Repo**: github.com/[org]/forgekit
+- **Repo**: github.com/jghiringhelli/forgecraft-mcp
 - **Primary Language**: TypeScript 5.x
 - **Framework**: MCP SDK (@modelcontextprotocol/sdk)
 - **Runtime**: Node.js 18+
 - **Domain**: Developer Tooling — MCP server for project scaffolding and quality enforcement
 - **Sensitive Data**: NO
 - **Project Tags**: `[UNIVERSAL]` `[API]` `[CLI]` `[LIBRARY]`
-- **Package**: `@forgekit/mcp-server` (npm)
+- **Package**: `forgecraft-mcp` (npm)
 
 ## Code Standards
 - Maximum function/method length: 50 lines. If longer, decompose.

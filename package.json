@@ -1,11 +1,11 @@
 {
-  "name": "@forgekit/mcp-server",
+  "name": "forgecraft-mcp",
   "version": "0.1.0",
   "description": "MCP server that gives Claude Code production-grade engineering standards — SOLID, testing, architecture, CI/CD — automatically tailored to your stack",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "forgekit-mcp": "dist/index.js"
+    "forgecraft-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -39,11 +39,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jghiringhelli/forgekit.git"
+    "url": "git+https://github.com/jghiringhelli/forgecraft-mcp.git"
   },
-  "homepage": "https://github.com/jghiringhelli/forgekit#readme",
+  "homepage": "https://github.com/jghiringhelli/forgecraft-mcp#readme",
   "bugs": {
-    "url": "https://github.com/jghiringhelli/forgekit/issues"
+    "url": "https://github.com/jghiringhelli/forgecraft-mcp/issues"
   },
   "engines": {
     "node": ">=18.0.0"

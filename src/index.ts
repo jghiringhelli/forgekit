@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Forgekit MCP Server — Entry Point.
+ * ForgeCraft MCP Server — Entry Point.
  *
  * Registers all tools and starts the MCP server over stdio transport.
- * This is the binary entry point run via `npx @forgekit/mcp-server`.
+ * This is the binary entry point run via `npx forgecraft-mcp`.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -72,10 +72,10 @@ import {
 const logger = createLogger("server");
 
 async function main(): Promise<void> {
-  logger.info("Starting Forgekit MCP server");
+  logger.info("Starting ForgeCraft MCP server");
 
   const server = new McpServer({
-    name: "forgekit",
+    name: "forgecraft",
     version: "0.1.0",
   });
 
@@ -167,14 +167,14 @@ async function main(): Promise<void> {
 
   server.tool(
     "setup_project",
-    "RECOMMENDED FIRST STEP. Analyzes project, auto-detects tags from code/dependencies, creates forgekit.yaml config, and generates a tailored CLAUDE.md with engineering standards. Call this when starting a new project, onboarding an existing codebase, or when no forgekit.yaml exists. Works for new and existing projects. Supports tier-based content filtering (core/recommended/optional).",
+    "RECOMMENDED FIRST STEP. Analyzes project, auto-detects tags from code/dependencies, creates forgecraft.yaml config, and generates a tailored CLAUDE.md with engineering standards. Call this when starting a new project, onboarding an existing codebase, or when no forgecraft.yaml exists. Works for new and existing projects. Supports tier-based content filtering (core/recommended/optional).",
     setupProjectSchema.shape,
     setupProjectHandler,
   );
 
   server.tool(
     "refresh_project",
-    "Re-analyze a project that already has forgekit.yaml. Detects tag drift (e.g. new framework added), proposes adding/removing tags, shows content impact. Use when project scope changes, new dependencies are added, or to upgrade content tier. Preview changes before applying.",
+    "Re-analyze a project that already has forgecraft.yaml. Detects tag drift (e.g. new framework added), proposes adding/removing tags, shows content impact. Use when project scope changes, new dependencies are added, or to upgrade content tier. Preview changes before applying.",
     refreshProjectSchema.shape,
     refreshProjectHandler,
   );
@@ -184,7 +184,7 @@ async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  logger.info("Forgekit MCP server running on stdio");
+  logger.info("ForgeCraft MCP server running on stdio");
 }
 
 main().catch((error) => {

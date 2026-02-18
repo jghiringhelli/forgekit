@@ -16,7 +16,7 @@ import type {
   HookTemplate,
   ReviewBlock,
   ContentTier,
-  ForgeKitConfig,
+  ForgeCraftConfig,
 } from "../shared/types.js";
 
 const logger = createLogger("registry/composer");
@@ -48,8 +48,8 @@ export interface ComposedTemplates {
 
 /** Options for controlling template composition. */
 export interface ComposeOptions {
-  /** ForgeKit project config with tier preferences and include/exclude. */
-  readonly config?: ForgeKitConfig;
+  /** ForgeCraft project config with tier preferences and include/exclude. */
+  readonly config?: ForgeCraftConfig;
 }
 
 /**

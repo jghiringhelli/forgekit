@@ -2,7 +2,7 @@
  * Template registry loader.
  *
  * Loads YAML template files from the templates/ directory (shipped with the package)
- * and merges with any user overrides from .forgekit.json.
+ * and merges with any user overrides from .forgecraft.json.
  */
 
 import { readFileSync, readdirSync, existsSync } from "node:fs";
@@ -19,7 +19,7 @@ import type {
   StructureTemplate,
   HookTemplate,
   ReviewTemplate,
-  ForgeKitConfig,
+  ForgeCraftConfig,
 } from "../shared/types.js";
 
 const logger = createLogger("registry/loader");
@@ -33,10 +33,10 @@ interface HooksYamlFile {
 
 /**
  * Resolve the templates directory path.
- * Uses FORGEKIT_TEMPLATE_DIR env var if set, otherwise the package's built-in templates.
+ * Uses FORGECRAFT_TEMPLATE_DIR env var if set, otherwise the package's built-in templates.
  */
 export function resolveTemplatesDir(): string {
-  const envDir = process.env["FORGEKIT_TEMPLATE_DIR"];
+  const envDir = process.env["FORGECRAFT_TEMPLATE_DIR"];
   if (envDir && existsSync(envDir)) {
     return resolve(envDir);
   }
@@ -194,38 +194,38 @@ export function tagToDirName(tag: Tag): string {
 }
 
 /**
- * Load user overrides from forgekit.yaml or .forgekit.json in the project directory.
- * Prefers forgekit.yaml over .forgekit.json.
+ * Load user overrides from forgecraft.yaml or .forgecraft.json in the project directory.
+ * Prefers forgecraft.yaml over .forgecraft.json.
  * Returns null if no config file exists.
  */
 export function loadUserOverrides(
   projectDir: string,
-): ForgeKitConfig | null {
+): ForgeCraftConfig | null {
   // Prefer YAML config
-  const yamlPath = join(projectDir, "forgekit.yaml");
+  const yamlPath = join(projectDir, "forgecraft.yaml");
   if (existsSync(yamlPath)) {
     try {
       const content = readFileSync(yamlPath, "utf-8");
-      return yaml.load(content) as ForgeKitConfig;
+      return yaml.load(content) as ForgeCraftConfig;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.warn("Failed to parse forgekit.yaml", { error: message });
+      logger.warn("Failed to parse forgecraft.yaml", { error: message });
       return null;
     }
   }
 
   // Fallback to JSON config
-  const configPath = join(projectDir, ".forgekit.json");
+  const configPath = join(projectDir, ".forgecraft.json");
   if (!existsSync(configPath)) {
     return null;
   }
 
   try {
     const content = readFileSync(configPath, "utf-8");
-    return JSON.parse(content) as ForgeKitConfig;
+    return JSON.parse(content) as ForgeCraftConfig;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    logger.warn("Failed to parse .forgekit.json", { error: message });
+    logger.warn("Failed to parse .forgecraft.json", { error: message });
     return null;
   }
 }

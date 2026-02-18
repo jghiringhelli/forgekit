@@ -1,5 +1,5 @@
 /**
- * Shared type definitions for the Forgekit MCP server.
+ * Shared type definitions for the ForgeCraft MCP server.
  *
  * All tags, project configuration, tool inputs/outputs, and template
  * structures are defined here as the single source of truth.
@@ -229,8 +229,8 @@ export interface McpServerConfig {
   readonly env?: Record<string, string>;
 }
 
-/** User override configuration from forgekit.yaml / .forgekit.json. */
-export interface ForgeKitConfig {
+/** User override configuration from forgecraft.yaml / .forgecraft.json. */
+export interface ForgeCraftConfig {
   /** Human-readable project name. */
   readonly projectName?: string;
   /** Active project tags. */

@@ -2,7 +2,7 @@
  * convert_existing tool handler.
  *
  * Analyzes an existing codebase and generates a phased migration plan
- * to adopt Forgekit's CC patterns.
+ * to adopt ForgeCraft's CC patterns.
  */
 
 import { z } from "zod";

@@ -1,5 +1,5 @@
 /**
- * Structured logging for Forgekit.
+ * Structured logging for ForgeCraft.
  * JSON-formatted log entries with consistent fields.
  */
 
@@ -69,7 +69,7 @@ export class Logger {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
-      service: "forgekit",
+      service: "forgecraft",
       module: this.module,
       message,
       ...context,

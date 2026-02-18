@@ -1,7 +1,7 @@
 /**
  * refresh_project tool handler.
  *
- * Re-analyzes an existing project that has forgekit.yaml,
+ * Re-analyzes an existing project that has forgecraft.yaml,
  * detects drift (new tags, changed scope), and proposes updates.
  * Can optionally apply updates to config and CLAUDE.md.
  */
@@ -11,7 +11,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import yaml from "js-yaml";
 import { ALL_TAGS, CONTENT_TIERS } from "../shared/types.js";
-import type { Tag, ContentTier, ForgeKitConfig } from "../shared/types.js";
+import type { Tag, ContentTier, ForgeCraftConfig } from "../shared/types.js";
 import { analyzeProject } from "../analyzers/package-json.js";
 import { checkCompleteness } from "../analyzers/completeness.js";
 import { loadAllTemplatesWithExtras, loadUserOverrides } from "../registry/loader.js";
@@ -33,7 +33,7 @@ export const refreshProjectSchema = z.object({
   apply: z
     .boolean()
     .default(false)
-    .describe("If true, apply recommended changes to forgekit.yaml and CLAUDE.md."),
+    .describe("If true, apply recommended changes to forgecraft.yaml and CLAUDE.md."),
   tier: z
     .enum(CONTENT_TIERS as unknown as [string, ...string[]])
     .optional()
@@ -92,7 +92,7 @@ export async function refreshProjectHandler(
   );
   const updatedTier = args.tier ?? existingConfig.tier ?? "recommended";
 
-  const updatedConfig: ForgeKitConfig = {
+  const updatedConfig: ForgeCraftConfig = {
     ...existingConfig,
     tags: updatedTags,
     tier: updatedTier as ContentTier,
@@ -117,7 +117,7 @@ export async function refreshProjectHandler(
 
   // Write updated config
   const configYaml = yaml.dump(updatedConfig, { lineWidth: 100, noRefs: true });
-  writeFileSync(join(projectDir, "forgekit.yaml"), configYaml, "utf-8");
+  writeFileSync(join(projectDir, "forgecraft.yaml"), configYaml, "utf-8");
 
   // Regenerate CLAUDE.md
   const context = {
@@ -143,7 +143,7 @@ export async function refreshProjectHandler(
  */
 function analyzeDrift(
   projectDir: string,
-  config: ForgeKitConfig,
+  config: ForgeCraftConfig,
   args: z.infer<typeof refreshProjectSchema>,
 ): DriftReport {
   const currentTags: Tag[] = config.tags ?? ["UNIVERSAL"];
@@ -256,12 +256,12 @@ function inferProjectName(projectDir: string): string {
 }
 
 /**
- * Output when no forgekit.yaml exists.
+ * Output when no forgecraft.yaml exists.
  */
 function buildNoConfigOutput(projectDir: string): string {
   return (
     `# No Configuration Found\n\n` +
-    `No forgekit.yaml or .forgekit.json found in \`${projectDir}\`.\n\n` +
+    `No forgecraft.yaml or .forgecraft.json found in \`${projectDir}\`.\n\n` +
     `Run \`setup_project\` first to initialize your project configuration.\n`
   );
 }
@@ -272,7 +272,7 @@ function buildNoConfigOutput(projectDir: string): string {
 function buildPreviewOutput(
   drift: DriftReport,
   updatedTags: Tag[],
-  _config: ForgeKitConfig,
+  _config: ForgeCraftConfig,
   composed: ReturnType<typeof composeTemplates>,
   tier: ContentTier,
 ): string {
@@ -327,7 +327,7 @@ function buildPreviewOutput(
 function buildAppliedOutput(
   drift: DriftReport,
   updatedTags: Tag[],
-  config: ForgeKitConfig,
+  config: ForgeCraftConfig,
   composed: ReturnType<typeof composeTemplates>,
   tier: ContentTier,
 ): string {
@@ -338,7 +338,7 @@ function buildAppliedOutput(
   text += `**Tier:** ${tier}\n\n`;
 
   text += `## Changes Applied\n`;
-  text += `- forgekit.yaml — updated\n`;
+  text += `- forgecraft.yaml — updated\n`;
   text += `- CLAUDE.md — regenerated (${composed.claudeMdBlocks.length} blocks)\n\n`;
 
   if (drift.newTagSuggestions.length > 0) {

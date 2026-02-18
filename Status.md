@@ -3,27 +3,27 @@
 ## Last Updated: 2026-02-18
 ## Session Summary
 Major architecture evolution: added tier-based content filtering, unified setup/refresh workflow,
-community template extensibility, and forgekit.yaml config system.
+community template extensibility, and forgecraft.yaml config system.
 
 ### What Changed
 1. **Tier System**: Added `ContentTier` type (`core | recommended | optional`) to all block types
    (ClaudeMdBlock, NfrBlock, ReviewBlock). Composer now filters blocks by tier level. All 112 blocks
    across 33 template files tagged with tier metadata.
-2. **forgekit.yaml Config**: Expanded `ForgeKitConfig` with `projectName`, `tags`, `tier`, `include`,
-   `exclude`, `templateDirs`, `variables`. Loader now supports both `forgekit.yaml` and `.forgekit.json`.
+2. **forgecraft.yaml Config**: Expanded `ForgeCraftConfig` with `projectName`, `tags`, `tier`, `include`,
+   `exclude`, `templateDirs`, `variables`. Loader now supports both `forgecraft.yaml` and `.forgecraft.json`.
 3. **setup_project Tool** (new): Unified entry point — analyzes project, detects tags, creates
-   forgekit.yaml, generates CLAUDE.md. Works for new and existing projects. Supports dry_run.
+   forgecraft.yaml, generates CLAUDE.md. Works for new and existing projects. Supports dry_run.
 4. **refresh_project Tool** (new): Re-analyzes project with existing config, detects drift (new tags,
    scope changes), proposes updates. Can auto-apply changes.
 5. **Community Template Dirs**: `loadAllTemplatesWithExtras()` loads from built-in + external dirs.
    Templates are merged additively (community extends built-in, dedup by ID).
 6. **Config-Aware Existing Tools**: `scaffold_project` and `generate_claude_md` now read
-   forgekit.yaml and respect tier/include/exclude settings.
+   forgecraft.yaml and respect tier/include/exclude settings.
 7. **Tests**: 111 passing (was 103). Added 8 new tests for tier filtering and include/exclude logic.
 
 ## Project Structure
 ```
-forgekit/
+forgecraft-mcp/
 ├── CLAUDE.md
 ├── Status.md
 ├── package.json
@@ -32,7 +32,7 @@ forgekit/
 ├── .claude/
 │   └── hooks/                    # Git quality gate scripts
 ├── docs/
-│   ├── forgekit-spec.md          # Product spec / PRD
+│   ├── forgecraft-spec.md          # Product spec / PRD
 │   ├── PRD.md
 │   └── TechSpec.md
 ├── src/
@@ -80,12 +80,12 @@ forgekit/
 | Feature | Status | Notes |
 |---------|--------|-------|
 | MCP server entry point | ✅ Complete | 14 tools registered |
-| Shared modules (config/errors/logger/types) | ✅ Complete | ContentTier, ForgeKitConfig expanded |
+| Shared modules (config/errors/logger/types) | ✅ Complete | ContentTier, ForgeCraftConfig expanded |
 | Template registry (loader/composer/renderer) | ✅ Complete | Tier filtering, community dirs |
 | YAML templates (43 files, 18 tags) | ✅ Complete | All blocks have tier metadata |
 | Tool: list_tags / list_hooks | ✅ Complete | |
 | Tool: classify_project | ✅ Complete | |
-| Tool: scaffold_project | ✅ Complete | Config-aware (forgekit.yaml) |
+| Tool: scaffold_project | ✅ Complete | Config-aware (forgecraft.yaml) |
 | Tool: generate_claude_md | ✅ Complete | Config-aware, merge mode |
 | Tool: audit_project | ✅ Complete | |
 | Tool: add_hook | ✅ Complete | |
@@ -134,6 +134,6 @@ forgekit/
 | 2026-02-18 | Canonical pattern blocks | Hexagonal arch, DDD, Clean Code, CQRS, 12-Factor | Active |
 | 2026-02-17 | Deployment & CI/CD templates | Per-tag deployment guidance (PaaS, containers, CDN) | Active |
 | 2026-02-18 | Tier system (core/recommended/optional) | Prevent overwhelming new projects. Core = auto, recommended = default, optional = opt-in | Active |
-| 2026-02-18 | forgekit.yaml config file | Project-level config for tags, tier, include/exclude, community dirs. YAML for easy merge & community contributions | Active |
+| 2026-02-18 | forgecraft.yaml config file | Project-level config for tags, tier, include/exclude, community dirs. YAML for easy merge & community contributions | Active |
 | 2026-02-18 | setup_project + refresh_project tools | Unified entry point and drift detection. Replaces manual classify→scaffold flow | Active |
 | 2026-02-18 | Community template directories | loadAllTemplatesWithExtras merges external YAML dirs. Enables npm community packs | Active |

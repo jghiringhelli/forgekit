@@ -17,6 +17,6 @@ export function loadConfig(): AppConfig {
   return Object.freeze({
     nodeEnv: process.env["NODE_ENV"] ?? "development",
     logLevel: process.env["LOG_LEVEL"] ?? "INFO",
-    templateDir: process.env["FORGEKIT_TEMPLATE_DIR"] ?? "",
+    templateDir: process.env["FORGECRAFT_TEMPLATE_DIR"] ?? "",
   });
 }

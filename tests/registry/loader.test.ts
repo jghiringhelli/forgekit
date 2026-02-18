@@ -97,7 +97,7 @@ describe("loader", () => {
   });
 
   describe("loadUserOverrides", () => {
-    it("should return null when .forgekit.json does not exist", () => {
+    it("should return null when .forgecraft.json does not exist", () => {
       const result = loadUserOverrides("/nonexistent/directory");
       expect(result).toBeNull();
     });

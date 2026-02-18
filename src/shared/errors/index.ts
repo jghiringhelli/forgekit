@@ -1,9 +1,9 @@
 /**
- * Custom error hierarchy for Forgekit.
+ * Custom error hierarchy for ForgeCraft.
  * Never throw bare Error — use these typed errors with context.
  */
 
-/** Base error for all Forgekit errors. */
+/** Base error for all ForgeCraft errors. */
 export class ForgeError extends Error {
   public readonly context: Record<string, unknown>;
 

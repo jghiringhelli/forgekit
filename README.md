@@ -1,16 +1,16 @@
-# Forgekit
+# ForgeCraft
 
 **MCP server that gives Claude Code production-grade engineering standards — automatically.**
 
 One command to install. Tell Claude "set up this project" and it classifies your codebase, generates a tailored CLAUDE.md with SOLID principles, testing standards, architecture patterns, and quality-gate hooks. Your AI coding assistant stops guessing what "good code" means.
 
 ```bash
-claude mcp add forgekit -- npx -y @forgekit/mcp-server
+claude mcp add forgecraft -- npx -y forgecraft-mcp
 ```
 
 > **The problem**: Claude Code is powerful but has no opinion about your project's engineering standards. Without a CLAUDE.md, every session starts from zero — inconsistent patterns, no testing requirements, no architecture guidance.
 >
-> **The fix**: Forgekit gives Claude 14 tools that analyze your project, compose the right standards from 18 domain-specific templates, and maintain them as your project evolves.
+> **The fix**: ForgeCraft gives Claude 14 tools that analyze your project, compose the right standards from 18 domain-specific templates, and maintain them as your project evolves.
 
 ---
 
@@ -18,7 +18,7 @@ claude mcp add forgekit -- npx -y @forgekit/mcp-server
 
 ```bash
 # 1. Install (one command, done)
-claude mcp add forgekit -- npx -y @forgekit/mcp-server
+claude mcp add forgecraft -- npx -y forgecraft-mcp
 
 # 2. Restart Claude Code, then say:
 "Set up this project for production"
@@ -27,7 +27,7 @@ claude mcp add forgekit -- npx -y @forgekit/mcp-server
 Claude will call `setup_project` which:
 1. Scans your codebase (package.json, dependencies, structure)
 2. Auto-detects relevant tags (`[API]`, `[WEB-REACT]`, etc.)
-3. Creates `forgekit.yaml` — your project config
+3. Creates `forgecraft.yaml` — your project config
 4. Generates a CLAUDE.md assembled from the right template blocks
 
 That's it. Claude now has engineering standards, architecture guidance, and testing requirements tailored to your stack.
@@ -38,7 +38,7 @@ That's it. Claude now has engineering standards, architecture guidance, and test
 
 ### 18 Tags, Composable
 
-Tags are domain classifiers. Pick `[WEB-REACT]` + `[API]` + `[FINTECH]` and Forgekit merges the right CLAUDE.md blocks, folder structures, hooks, NFRs, and review checklists — no conflicts, no duplicates.
+Tags are domain classifiers. Pick `[WEB-REACT]` + `[API]` + `[FINTECH]` and ForgeCraft merges the right CLAUDE.md blocks, folder structures, hooks, NFRs, and review checklists — no conflicts, no duplicates.
 
 | Tag | What it adds |
 |-----|-------------|
@@ -63,7 +63,7 @@ Tags are domain classifiers. Pick `[WEB-REACT]` + `[API]` + `[FINTECH]` and Forg
 
 ### Content Tiers — Don't Overwhelm
 
-Not every project needs DDD and CQRS on day one. Forgekit uses a three-tier system:
+Not every project needs DDD and CQRS on day one. ForgeCraft uses a three-tier system:
 
 | Tier | What's included | When to use |
 |------|----------------|-------------|
@@ -71,7 +71,7 @@ Not every project needs DDD and CQRS on day one. Forgekit uses a three-tier syst
 | **recommended** | Core + architecture patterns, CI/CD, clean code, deployment | Most projects (default) |
 | **optional** | Everything — DDD, CQRS, event sourcing, design patterns catalog | Mature teams, complex domains |
 
-Set your tier in `forgekit.yaml` and Forgekit composes only what's appropriate.
+Set your tier in `forgecraft.yaml` and ForgeCraft composes only what's appropriate.
 
 ### 14 Tools
 
@@ -100,7 +100,7 @@ For a `[UNIVERSAL]` + `[API]` project at `recommended` tier:
 
 ```
 your-project/
-├── forgekit.yaml          # Project config (tags, tier, customization)
+├── forgecraft.yaml          # Project config (tags, tier, customization)
 ├── CLAUDE.md              # ~12 blocks: SOLID, architecture, testing, CI/CD, ...
 ├── Status.md              # Session continuity
 ├── .claude/
@@ -118,7 +118,7 @@ your-project/
 
 ### The CLAUDE.md
 
-This is the core value. Forgekit assembles a CLAUDE.md from curated blocks covering:
+This is the core value. ForgeCraft assembles a CLAUDE.md from curated blocks covering:
 
 - **SOLID principles** — concrete rules, not vague advice
 - **Hexagonal architecture** — ports, adapters, DTOs, layer rules
@@ -133,9 +133,9 @@ Every block is sourced from established literature (Martin, Evans, Wiggins) and 
 
 ---
 
-## Configuration — `forgekit.yaml`
+## Configuration — `forgecraft.yaml`
 
-After running `setup_project`, your project gets a `forgekit.yaml`:
+After running `setup_project`, your project gets a `forgecraft.yaml`:
 
 ```yaml
 projectName: my-api
@@ -171,7 +171,7 @@ variables:
 # Load additional templates from npm packages or local dirs
 templateDirs:
   - ./my-company-standards
-  - node_modules/@forgekit-community/tag-flutter/templates
+  - node_modules/@forgecraft-community/tag-flutter/templates
 ```
 
 ---
@@ -242,13 +242,13 @@ See [`templates/universal/`](templates/universal/) for examples. PRs welcome.
 Create an npm package with a `templates/` directory following the same structure:
 
 ```bash
-npm init @forgekit-community/tag-flutter
+npm init @forgecraft-community/tag-flutter
 ```
 
-Users add it to `forgekit.yaml`:
+Users add it to `forgecraft.yaml`:
 ```yaml
 templateDirs:
-  - node_modules/@forgekit-community/tag-flutter/templates
+  - node_modules/@forgecraft-community/tag-flutter/templates
 ```
 
 ---
@@ -256,8 +256,8 @@ templateDirs:
 ## Development
 
 ```bash
-git clone https://github.com/jghiringhelli/forgekit.git
-cd forgekit
+git clone https://github.com/jghiringhelli/forgecraft-mcp.git
+cd forgecraft-mcp
 npm install
 npm run build
 npm test              # 111 tests

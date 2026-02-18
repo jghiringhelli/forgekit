@@ -43,9 +43,9 @@ export const configureMcpSchema = z.object({
 
 const TAG_SERVERS: Record<string, Record<string, McpServerConfig>> = {
   UNIVERSAL: {
-    forgekit: {
+    forgecraft: {
       command: "npx",
-      args: ["-y", "@forgekit/mcp-server"],
+      args: ["-y", "forgecraft-mcp"],
     },
     codeseeker: {
       command: "npx",
