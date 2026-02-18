@@ -1,51 +1,122 @@
-# ForgeCraft
+<p align="center">
+  <h1 align="center">ForgeCraft</h1>
+  <p align="center">
+    <strong>Give Claude Code real engineering standards. Automatically.</strong>
+  </p>
+  <p align="center">
+    <a href="https://www.npmjs.com/package/forgecraft-mcp"><img src="https://img.shields.io/npm/v/forgecraft-mcp.svg" alt="npm version"></a>
+    <a href="https://github.com/jghiringhelli/forgecraft-mcp/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/forgecraft-mcp.svg" alt="license"></a>
+    <a href="https://www.npmjs.com/package/forgecraft-mcp"><img src="https://img.shields.io/npm/dm/forgecraft-mcp.svg" alt="downloads"></a>
+  </p>
+</p>
 
-**MCP server that gives Claude Code production-grade engineering standards — automatically.**
+---
 
-One command to install. Tell Claude "set up this project" and it classifies your codebase, generates a tailored CLAUDE.md with SOLID principles, testing standards, architecture patterns, and quality-gate hooks. Your AI coding assistant stops guessing what "good code" means.
+Claude Code is powerful — but without a CLAUDE.md, it has no opinion about your project. No architecture rules. No testing requirements. No code standards. Every session starts from scratch and you get inconsistent results.
+
+**ForgeCraft fixes that in 30 seconds.**
 
 ```bash
 claude mcp add forgecraft -- npx -y forgecraft-mcp
 ```
 
-> **The problem**: Claude Code is powerful but has no opinion about your project's engineering standards. Without a CLAUDE.md, every session starts from zero — inconsistent patterns, no testing requirements, no architecture guidance.
->
-> **The fix**: ForgeCraft gives Claude 14 tools that analyze your project, compose the right standards from 18 domain-specific templates, and maintain them as your project evolves.
+Then tell Claude:
 
----
+> "Set up this project for production"
 
-## Quick Start
+Done. Claude now has a tailored CLAUDE.md with SOLID principles, testing standards, architecture patterns, CI/CD guidance, and quality-gate hooks — all matched to your stack.
 
-```bash
-# 1. Install (one command, done)
-claude mcp add forgecraft -- npx -y forgecraft-mcp
+## Before & After
 
-# 2. Restart Claude Code, then say:
-"Set up this project for production"
+| Without ForgeCraft | With ForgeCraft |
+|---|---|
+| Claude guesses your code style | Claude follows SOLID, clean code, and your architecture |
+| No testing requirements | Testing pyramid with coverage targets (80%+ enforced) |
+| Random folder structures | Consistent feature-based modules |
+| No commit standards | Conventional commits, atomic changes |
+| Each session starts from zero | `Status.md` + `forgecraft.yaml` maintain continuity |
+| Generic advice | Domain-specific patterns (fintech, healthcare, gaming, etc.) |
+
+## How It Works
+
+```
+You: "Set up this project for production"
+
+Claude calls setup_project → scans your code → detects [API] + [WEB-REACT]
+                           → creates forgecraft.yaml
+                           → generates CLAUDE.md from 112 curated template blocks
+                           → adds quality-gate hooks
+                           → done
 ```
 
-Claude will call `setup_project` which:
-1. Scans your codebase (package.json, dependencies, structure)
-2. Auto-detects relevant tags (`[API]`, `[WEB-REACT]`, etc.)
-3. Creates `forgecraft.yaml` — your project config
-4. Generates a CLAUDE.md assembled from the right template blocks
+ForgeCraft is an [MCP server](https://modelcontextprotocol.io/) — it gives Claude 14 specialized tools. Claude picks the right ones automatically. You just describe what you want in plain English.
 
-That's it. Claude now has engineering standards, architecture guidance, and testing requirements tailored to your stack.
+## Install
 
----
+**One line. Takes 10 seconds.**
 
-## What's in the Box
+```bash
+claude mcp add forgecraft -- npx -y forgecraft-mcp
+```
 
-### 18 Tags, Composable
+Restart Claude Code. That's it.
 
-Tags are domain classifiers. Pick `[WEB-REACT]` + `[API]` + `[FINTECH]` and ForgeCraft merges the right CLAUDE.md blocks, folder structures, hooks, NFRs, and review checklists — no conflicts, no duplicates.
+<details>
+<summary>Alternative: manual config</summary>
+
+Add to `.claude/settings.json`:
+```json
+{
+  "mcpServers": {
+    "forgecraft": {
+      "command": "npx",
+      "args": ["-y", "forgecraft-mcp"]
+    }
+  }
+}
+```
+</details>
+
+## What You Get
+
+After `setup_project`, your project has:
+
+```
+your-project/
+├── forgecraft.yaml        ← Your config (tags, tier, customizations)
+├── CLAUDE.md              ← Engineering standards tailored to your stack
+├── Status.md              ← Session continuity tracker
+├── .claude/hooks/         ← Pre-commit quality gates
+├── docs/
+│   ├── PRD.md             ← Requirements skeleton
+│   └── TechSpec.md        ← Architecture + NFR sections
+└── src/shared/            ← Config, errors, logger starters
+```
+
+### The CLAUDE.md
+
+This is the core value. Assembled from curated blocks covering:
+
+- **SOLID principles** — concrete rules, not platitudes
+- **Hexagonal architecture** — ports, adapters, DTOs, layer boundaries
+- **Testing pyramid** — unit/integration/E2E targets, test doubles taxonomy
+- **Clean code** — CQS, guard clauses, immutability, pure functions
+- **CI/CD & deployment** — pipeline stages, environments, preview deploys
+- **Domain patterns** — DDD, CQRS, event sourcing (when your project needs it)
+- **12-Factor ops** — config, statelessness, disposability, logging
+
+Every block is sourced from established engineering literature (Martin, Evans, Wiggins) and adapted for AI-assisted development.
+
+## 18 Tags — Pick What Fits
+
+Tags are domain classifiers. ForgeCraft auto-detects them from your code, or you choose manually. Combine freely — blocks merge without conflicts.
 
 | Tag | What it adds |
 |-----|-------------|
-| `UNIVERSAL` | SOLID, testing pyramid, commit protocol, error handling (always on) |
-| `API` | REST/GraphQL contracts, auth, rate limiting, API versioning |
-| `WEB-REACT` | Component arch, state management, a11y, performance budgets |
-| `WEB-STATIC` | Build optimization, SEO, CDN, static deployment |
+| `UNIVERSAL` | SOLID, testing, commits, error handling *(always on)* |
+| `API` | REST/GraphQL contracts, auth, rate limiting, versioning |
+| `WEB-REACT` | Component arch, state management, a11y, perf budgets |
+| `WEB-STATIC` | Build optimization, SEO, CDN, static deploy |
 | `CLI` | Arg parsing, output formatting, exit codes |
 | `LIBRARY` | API design, semver, backwards compatibility |
 | `INFRA` | Terraform/CDK, Kubernetes, secrets management |
@@ -61,197 +132,101 @@ Tags are domain classifiers. Pick `[WEB-REACT]` + `[API]` + `[FINTECH]` and Forg
 | `STATE-MACHINE` | Transitions, guards, event-driven workflows |
 | `WEB3` | Smart contracts, gas optimization, wallet security |
 
-### Content Tiers — Don't Overwhelm
+## Content Tiers
 
-Not every project needs DDD and CQRS on day one. ForgeCraft uses a three-tier system:
+Not every project needs DDD on day one.
 
-| Tier | What's included | When to use |
-|------|----------------|-------------|
-| **core** | Code standards, testing, commit protocol, error handling | New/small projects |
-| **recommended** | Core + architecture patterns, CI/CD, clean code, deployment | Most projects (default) |
-| **optional** | Everything — DDD, CQRS, event sourcing, design patterns catalog | Mature teams, complex domains |
+| Tier | Includes | Best for |
+|------|----------|----------|
+| **core** | Code standards, testing, commit protocol | New/small projects |
+| **recommended** | + architecture, CI/CD, clean code, deploy | Most projects *(default)* |
+| **optional** | + DDD, CQRS, event sourcing, design patterns | Mature teams, complex domains |
 
-Set your tier in `forgecraft.yaml` and ForgeCraft composes only what's appropriate.
-
-### 14 Tools
-
-| Tool | What it does |
-|------|-------------|
-| **`setup_project`** | Unified entry point — analyze, classify, configure, generate. New or existing projects. |
-| **`refresh_project`** | Re-analyze after scope changes. Detects new tags, proposes config updates. |
-| `classify_project` | Analyze codebase + description to suggest tags |
-| `scaffold_project` | Generate full project structure (CLAUDE.md, hooks, folders, docs) |
-| `generate_claude_md` | Generate or regenerate CLAUDE.md with merge support |
-| `audit_project` | Score project compliance against standards (run in CI or weekly) |
-| `review_project` | Structured review checklist: architecture, quality, tests, performance |
-| `convert_existing` | Phased migration plan for existing codebases |
-| `add_hook` | Add a quality-gate hook (pre-commit, pre-push) |
-| `add_module` | Scaffold a feature module following established patterns |
-| `configure_mcp` | Generate `.claude/settings.json` with recommended servers |
-| `get_nfr_template` | Get NFR sections for Tech Spec generation |
-| `list_tags` | List all available tags with descriptions |
-| `list_hooks` | List hooks, filterable by tag |
-
----
-
-## What Gets Generated
-
-For a `[UNIVERSAL]` + `[API]` project at `recommended` tier:
-
-```
-your-project/
-├── forgecraft.yaml          # Project config (tags, tier, customization)
-├── CLAUDE.md              # ~12 blocks: SOLID, architecture, testing, CI/CD, ...
-├── Status.md              # Session continuity
-├── .claude/
-│   └── hooks/             # Quality gates
-│       ├── pre-commit-branch-check.sh
-│       ├── pre-commit-secrets.sh
-│       └── ...
-├── docs/
-│   ├── PRD.md             # Requirements skeleton
-│   └── TechSpec.md        # Architecture + NFR sections
-├── src/shared/            # Config, errors, logger
-├── .env.example
-└── .gitignore
-```
-
-### The CLAUDE.md
-
-This is the core value. ForgeCraft assembles a CLAUDE.md from curated blocks covering:
-
-- **SOLID principles** — concrete rules, not vague advice
-- **Hexagonal architecture** — ports, adapters, DTOs, layer rules
-- **Testing pyramid** — coverage targets, test doubles taxonomy, property-based testing
-- **Clean code** — CQS, guard clauses, immutability, pure functions
-- **CI/CD & deployment** — pipeline stages, environments, preview deploys
-- **Domain patterns** — DDD, CQRS, event sourcing (optional tier)
-- **Design patterns** — when to use Factory, Strategy, Repository, Saga (optional tier)
-- **12-Factor ops** — config, statelessness, disposability, logging
-
-Every block is sourced from established literature (Martin, Evans, Wiggins) and adapted for AI-assisted development.
-
----
-
-## Configuration — `forgecraft.yaml`
-
-After running `setup_project`, your project gets a `forgecraft.yaml`:
-
+Set in `forgecraft.yaml`:
 ```yaml
 projectName: my-api
-tags:
-  - UNIVERSAL
-  - API
+tags: [UNIVERSAL, API]
 tier: recommended
 ```
+
+## All 14 Tools
+
+| Tool | Purpose |
+|------|---------|
+| `setup_project` | **Start here.** Analyze → classify → configure → generate. |
+| `refresh_project` | Re-scan after changes. Detects new tags, updates config. |
+| `classify_project` | Analyze code to suggest tags |
+| `scaffold_project` | Generate full project structure |
+| `generate_claude_md` | Create/regenerate CLAUDE.md |
+| `audit_project` | Score compliance (0-100). Run in CI. |
+| `review_project` | Structured review checklist |
+| `convert_existing` | Phased migration plan for legacy code |
+| `add_hook` | Add quality-gate hooks |
+| `add_module` | Scaffold a feature module |
+| `configure_mcp` | Generate `.claude/settings.json` |
+| `get_nfr_template` | NFR sections for tech specs |
+| `list_tags` | Show all available tags |
+| `list_hooks` | Show hooks, filterable by tag |
+
+## Configuration
 
 ### Fine-tune what Claude sees
 
 ```yaml
-# Exclude specific blocks
+# forgecraft.yaml
+projectName: my-api
+tags: [UNIVERSAL, API, FINTECH]
+tier: recommended
+
 exclude:
-  - cqrs-event-patterns
-  - design-patterns-reference
+  - cqrs-event-patterns    # Don't need this yet
 
-# Or include only specific ones
-include:
-  - code-standards
-  - testing-pyramid
-  - layered-architecture
-
-# Override template variables
 variables:
-  coverage_minimum: 90
+  coverage_minimum: 90      # Override defaults
   max_file_length: 400
 ```
 
 ### Community template packs
 
 ```yaml
-# Load additional templates from npm packages or local dirs
 templateDirs:
   - ./my-company-standards
-  - node_modules/@forgecraft-community/tag-flutter/templates
+  - node_modules/@my-org/forgecraft-flutter/templates
 ```
 
----
+## Keeping Standards Fresh
 
-## Ongoing Maintenance
-
-### Audit
-
-Run `audit_project` regularly — in CI, at sprint start, or whenever:
+### Audit (run anytime, or in CI)
 
 ```
 Score: 72/100  Grade: C
 
-Passing (8):
-  ✅ CLAUDE.md exists
-  ✅ Hooks installed (3/3)
-  ✅ Test script configured
-
-Failing (3):
-  🔴 hardcoded_url: src/auth/service.ts — move to config
-  🔴 status_md_current: not updated in 12 days
-  🟡 lock_file: not committed
-
-Recommendations:
-  1. Move URLs to config module
-  2. Update Status.md each session
-  3. Commit package-lock.json
+✅ CLAUDE.md exists
+✅ Hooks installed (3/3)
+✅ Test script configured
+🔴 hardcoded_url: src/auth/service.ts
+🔴 status_md_current: not updated in 12 days
+🟡 lock_file: not committed
 ```
 
-### Refresh
+### Refresh (project scope changed?)
 
-Project grew? Added a mobile app to your API? Run `refresh_project`:
-- Re-scans codebase for new framework signals
-- Suggests adding `[MOBILE]` tag
-- Shows block count impact before/after
-- Updates config and CLAUDE.md when you approve
-
----
+Tell Claude *"refresh this project"* — it re-scans, suggests new tags, shows before/after impact, and updates everything on approval.
 
 ## Contributing
 
-**Templates are YAML, not code.** You can add a tag or improve patterns without writing TypeScript.
+Templates are YAML, not code. You can add patterns without writing TypeScript.
 
 ```
 templates/your-tag/
-├── claude-md.yaml      # CLAUDE.md blocks (with tier: core/recommended/optional)
+├── claude-md.yaml      # CLAUDE.md blocks (with tier metadata)
 ├── structure.yaml      # Folder structure
 ├── nfr.yaml            # Non-functional requirements
 ├── hooks.yaml          # Quality gate scripts
 └── review.yaml         # Code review checklists
 ```
 
-Each block has an `id`, `tier`, `title`, and `content`:
-
-```yaml
-- id: my-pattern
-  tier: recommended
-  title: "My Pattern"
-  content: |
-    ## My Pattern
-    Guidance goes here...
-```
-
-See [`templates/universal/`](templates/universal/) for examples. PRs welcome.
-
-### Community Template Packs
-
-Create an npm package with a `templates/` directory following the same structure:
-
-```bash
-npm init @forgecraft-community/tag-flutter
-```
-
-Users add it to `forgecraft.yaml`:
-```yaml
-templateDirs:
-  - node_modules/@forgecraft-community/tag-flutter/templates
-```
-
----
+PRs welcome. See [`templates/universal/`](templates/universal/) for the format.
 
 ## Development
 
@@ -260,7 +235,7 @@ git clone https://github.com/jghiringhelli/forgecraft-mcp.git
 cd forgecraft-mcp
 npm install
 npm run build
-npm test              # 111 tests
+npm test   # 111 tests, 9 suites
 ```
 
 ## License
