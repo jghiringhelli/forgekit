@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "forgekit": {
+      "command": "npx",
+      "args": ["-y", "@forgekit/mcp-server"],
+      "env": {}
+    }
+  }
+}

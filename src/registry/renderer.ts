@@ -1,0 +1,315 @@
+/**
+ * Template renderer.
+ *
+ * Renders composed template content with project-specific variable substitution.
+ * Handles {{variable}} and {{variable | default: value}} syntax.
+ */
+
+import { createLogger } from "../shared/logger/index.js";
+import type { ClaudeMdBlock, NfrBlock, ReviewBlock, ReviewDimension, Tag } from "../shared/types.js";
+
+const logger = createLogger("registry/renderer");
+
+/** Variables available for template rendering. */
+export interface RenderContext {
+  readonly projectName: string;
+  readonly language: string;
+  readonly framework?: string;
+  readonly domain?: string;
+  readonly repoUrl?: string;
+  readonly sensitiveData?: string;
+  readonly tags: Tag[];
+  readonly [key: string]: unknown;
+}
+
+/**
+ * Render a CLAUDE.md from composed blocks and project context.
+ * Returns the full CLAUDE.md content as a string.
+ */
+export function renderClaudeMd(
+  blocks: ClaudeMdBlock[],
+  context: RenderContext,
+): string {
+  const sections: string[] = ["# CLAUDE.md\n"];
+
+  for (const block of blocks) {
+    const rendered = renderTemplate(block.content, context);
+    sections.push(rendered);
+  }
+
+  return sections.join("\n");
+}
+
+/**
+ * Render NFR sections from composed blocks.
+ */
+export function renderNfrs(
+  blocks: NfrBlock[],
+  context: RenderContext,
+): string {
+  const sections: string[] = [];
+
+  for (const block of blocks) {
+    sections.push(renderTemplate(block.content, context));
+  }
+
+  return sections.join("\n");
+}
+
+/** Dimension display order for review output. */
+const DIMENSION_ORDER: readonly ReviewDimension[] = [
+  "architecture",
+  "code-quality",
+  "tests",
+  "performance",
+] as const;
+
+/** Human-readable titles for review dimensions. */
+const DIMENSION_TITLES: Record<ReviewDimension, string> = {
+  architecture: "Architecture Review",
+  "code-quality": "Code Quality Review",
+  tests: "Test Review",
+  performance: "Performance Review",
+};
+
+/**
+ * Render review checklist blocks grouped by dimension.
+ *
+ * @param blocks - Composed review blocks from all active tags.
+ * @param scope  - "comprehensive" renders all items; "focused" limits to critical items.
+ * @returns Formatted markdown review checklist.
+ */
+export function renderReviewChecklist(
+  blocks: ReviewBlock[],
+  scope: "comprehensive" | "focused",
+): string {
+  const sections: string[] = [];
+
+  // Group blocks by dimension
+  const byDimension = new Map<ReviewDimension, ReviewBlock[]>();
+  for (const block of blocks) {
+    const existing = byDimension.get(block.dimension) ?? [];
+    existing.push(block);
+    byDimension.set(block.dimension, existing);
+  }
+
+  for (const dimension of DIMENSION_ORDER) {
+    const dimensionBlocks = byDimension.get(dimension);
+    if (!dimensionBlocks || dimensionBlocks.length === 0) continue;
+
+    sections.push(`## ${DIMENSION_TITLES[dimension]}`);
+    sections.push("");
+
+    for (const block of dimensionBlocks) {
+      sections.push(`### ${block.title}`);
+      sections.push(block.description.trim());
+      sections.push("");
+
+      const items =
+        scope === "focused"
+          ? block.checklist.filter((item) => item.severity === "critical")
+          : block.checklist;
+
+      for (const item of items) {
+        const icon =
+          item.severity === "critical"
+            ? "🔴"
+            : item.severity === "important"
+              ? "🟡"
+              : "🟢";
+        sections.push(`- ${icon} **[${item.severity.toUpperCase()}]** ${item.description}`);
+      }
+      sections.push("");
+    }
+  }
+
+  // Add the per-issue output format guidance
+  sections.push("---");
+  sections.push("");
+  sections.push("## Per-Issue Output Format");
+  sections.push("");
+  sections.push("For every issue found, provide:");
+  sections.push("1. **Problem**: Describe concretely, with file and line references.");
+  sections.push("2. **Options**: Present 2-3 options (including \"do nothing\" where reasonable).");
+  sections.push("3. **For each option**: implementation effort, risk, impact on other code, maintenance burden.");
+  sections.push("4. **Recommendation**: Your preferred option with rationale.");
+  sections.push("5. **Confirmation**: Ask whether to proceed or choose a different direction.");
+  sections.push("");
+
+  return sections.join("\n");
+}
+
+/**
+ * Render a Status.md skeleton with project info.
+ */
+export function renderStatusMd(context: RenderContext): string {
+  return `# Status.md
+
+## Last Updated: ${new Date().toISOString().split("T")[0]}
+## Session Summary
+Project initialized with Forgekit. Tags: ${context.tags.join(", ")}.
+
+## Project Structure
+\`\`\`
+[Run 'tree -L 3 --dirsfirst' to populate]
+\`\`\`
+
+## Feature Tracker
+| Feature | Status | Branch | Notes |
+|---------|--------|--------|-------|
+| | ⬚ Not Started | | |
+
+## Known Bugs
+| ID | Description | Severity | Status |
+|----|-------------|----------|--------|
+| | | | |
+
+## Technical Debt
+| Item | Impact | Effort | Priority |
+|------|--------|--------|----------|
+| | | | |
+
+## Current Context
+- Working on:
+- Blocked by:
+- Decisions pending:
+- Next steps:
+
+## Architecture Decision Log
+| Date | Decision | Rationale | Status |
+|------|----------|-----------|--------|
+| | | | |
+`;
+}
+
+/**
+ * Render a PRD skeleton.
+ */
+export function renderPrdSkeleton(context: RenderContext): string {
+  return `# PRD: ${context.projectName}
+
+## Background & Context
+[Why this project exists, what problem it solves]
+
+## Stakeholders
+[Who owns it, who uses it, who's affected]
+
+## User Stories
+[Organized by feature area]
+- US-001: As a [type], I want [action] so that [benefit]
+
+## Requirements
+### Functional Requirements
+- FR-001: [requirement]
+
+### Non-Functional Requirements
+[Generated from active tags: ${context.tags.join(", ")}]
+
+## Out of Scope
+[Explicitly list what this project does NOT do]
+
+## Success Metrics
+[How do we know this project succeeded?]
+
+## Open Questions
+[Unresolved decisions]
+`;
+}
+
+/**
+ * Render a Tech Spec skeleton.
+ */
+export function renderTechSpecSkeleton(context: RenderContext): string {
+  return `# Tech Spec: ${context.projectName}
+
+## Overview
+[One paragraph translating PRD to technical approach]
+
+## Architecture
+### System Diagram
+[Mermaid diagram or description of components]
+
+### Tech Stack
+- Runtime: ${context.language}
+- Framework: ${context.framework ?? "[TBD]"}
+
+### Data Flow
+[How data moves through the system]
+
+## API Contracts
+[Key endpoints, request/response shapes]
+
+## Security & Compliance
+[Auth approach, encryption, audit logging]
+
+## Dependencies
+[External services, APIs, libraries with version pins]
+
+## Risks & Mitigations
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| | H/M/L | H/M/L | |
+`;
+}
+
+/**
+ * Render a template string by substituting {{variable}} placeholders.
+ * Supports {{variable | default: value}} syntax.
+ */
+export function renderTemplate(
+  template: string,
+  context: RenderContext,
+): string {
+  return template.replace(
+    /\{\{(\s*[\w.]+\s*(?:\|\s*default:\s*[^}]+)?)\}\}/g,
+    (_match, expression: string) => {
+      const parts = expression.split("|").map((p) => p.trim());
+      const varName = parts[0] as string;
+
+      // Look up variable in context
+      const value = resolveVariable(varName, context);
+
+      if (value !== undefined && value !== null && value !== "") {
+        return String(value);
+      }
+
+      // Check for default value
+      if (parts.length > 1) {
+        const defaultPart = parts[1] as string;
+        const defaultMatch = defaultPart.match(/^default:\s*(.+)$/);
+        if (defaultMatch) {
+          return (defaultMatch[1] as string).trim();
+        }
+      }
+
+      // Return the original placeholder if no value and no default
+      return `{{${varName}}}`;
+    },
+  );
+}
+
+/**
+ * Resolve a dotted variable name from the context.
+ */
+function resolveVariable(name: string, context: RenderContext): unknown {
+  // Handle special case: tags as comma-separated string
+  if (name === "tags") {
+    return context.tags.map((t) => `\`[${t}]\``).join(" ");
+  }
+
+  // Handle snake_case to camelCase mapping
+  const camelName = name.replace(/_([a-z])/g, (_, letter: string) =>
+    letter.toUpperCase(),
+  );
+
+  if (camelName in context) {
+    return context[camelName];
+  }
+
+  if (name in context) {
+    return context[name];
+  }
+
+  logger.debug("Unresolved template variable", { variable: name });
+  return undefined;
+}

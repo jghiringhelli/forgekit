@@ -1,0 +1,42 @@
+tag: ML
+section: claude-md
+blocks:
+  - id: training-pipelines
+    tier: recommended
+    title: "Model Training & Experiment Tracking"
+    content: |
+      ## Model Training & Experiment Tracking
+
+      - Track every experiment with a tool like MLflow, Weights & Biases, or DVC. Log hyperparameters, metrics, dataset versions, and the git commit hash for full reproducibility.
+      - Pin all dependencies (Python version, library versions, CUDA version) in a lockfile or Docker image. A training run from six months ago must be reproducible today.
+      - Separate data preprocessing, feature engineering, model training, and evaluation into distinct pipeline stages with clear interfaces.
+      - Use configuration files (YAML/TOML) for hyperparameters rather than hard-coding them. Support overrides via CLI arguments for sweep runs.
+      - Always hold out a test set that is never used during training or hyperparameter tuning. Report final metrics exclusively on this set.
+      - Version datasets alongside code. Use content-addressable storage or DVC to track dataset lineage and detect drift between training runs.
+      - Set random seeds for all sources of non-determinism (NumPy, PyTorch, TensorFlow, data shuffling) to ensure reproducible results on the same hardware.
+
+  - id: feature-engineering
+    tier: recommended
+    title: "Feature Engineering & Data Preparation"
+    content: |
+      ## Feature Engineering & Data Preparation
+
+      - Build a centralized feature store (or at minimum a shared feature module) to avoid duplicating feature logic across training and serving.
+      - Document every feature: its definition, data source, expected range, update frequency, and any known caveats or biases.
+      - Compute feature statistics (mean, std, min, max, null rate) on the training set and persist them. Apply the same transformations at inference time using these saved statistics—never recompute from inference data.
+      - Handle missing values explicitly. Choose an imputation strategy per feature (mean, median, mode, sentinel value, or model-based) and document the rationale.
+      - Detect and handle data leakage: ensure no future information leaks into features, and that train/validation/test splits respect temporal or entity boundaries.
+      - Monitor feature distributions in production. Alert when serving-time distributions diverge significantly from training-time distributions (data/concept drift).
+
+  - id: model-deployment
+    tier: recommended
+    title: "Model Versioning & Deployment"
+    content: |
+      ## Model Versioning & Serving
+
+      - Store trained model artifacts in a model registry with semantic versioning. Tag each artifact with the training run ID, dataset version, and evaluation metrics.
+      - Serve models behind a versioned API endpoint. Support A/B testing and canary rollouts by routing a percentage of traffic to a new model version.
+      - Define minimum performance thresholds (accuracy, latency p99, throughput) as promotion gates. A model must pass automated evaluation before being promoted to production.
+      - Implement shadow mode: run a new model in parallel with the current production model, compare outputs, and alert on significant divergence before cutting over.
+      - Log all predictions with input features, model version, and timestamp. This enables debugging, bias auditing, and retraining on production data.
+      - Set up automated retraining triggers based on performance degradation, data drift detection, or a fixed schedule. Ensure the retraining pipeline is fully automated end-to-end.

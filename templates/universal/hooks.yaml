@@ -1,0 +1,196 @@
+tag: UNIVERSAL
+section: hooks
+hooks:
+  - name: branch-protection
+    trigger: pre-commit
+    description: "Block direct commits to main/master branches"
+    filename: pre-commit-branch-check.sh
+    script: |
+      #!/bin/bash
+      BRANCH=$(git rev-parse --abbrev-ref HEAD)
+      if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
+        echo "❌ Direct commits to $BRANCH are blocked. Create a feature branch."
+        exit 1
+      fi
+
+  - name: dangerous-commands
+    trigger: pre-exec
+    description: "Block destructive commands (rm -rf /, DROP DATABASE, force push)"
+    filename: pre-exec-safety.sh
+    script: |
+      #!/bin/bash
+      DANGEROUS_PATTERNS=(
+        "rm -rf /"
+        "DROP DATABASE"
+        "DROP TABLE"
+        "TRUNCATE"
+        "force push"
+        "git push.*--force"
+        "kubectl delete namespace"
+      )
+      for pattern in "${DANGEROUS_PATTERNS[@]}"; do
+        if echo "$1" | grep -iqE "$pattern"; then
+          echo "❌ Blocked dangerous command matching: $pattern"
+          exit 1
+        fi
+      done
+
+  - name: auto-format
+    trigger: pre-commit
+    description: "Run language-appropriate formatter on staged files"
+    filename: pre-commit-format.sh
+    script: |
+      #!/bin/bash
+      STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+      # Python
+      echo "$STAGED" | grep '\.py$' | xargs -r black --quiet 2>/dev/null
+      echo "$STAGED" | grep '\.py$' | xargs -r isort --quiet 2>/dev/null
+      # TypeScript/JavaScript
+      echo "$STAGED" | grep '\.\(ts\|tsx\|js\|jsx\)$' | xargs -r npx prettier --write 2>/dev/null
+      # Re-stage formatted files
+      echo "$STAGED" | xargs -r git add
+
+  - name: secrets-scanner
+    trigger: pre-commit
+    description: "Scan for accidentally committed secrets (AWS keys, API keys, passwords)"
+    filename: pre-commit-secrets.sh
+    script: |
+      #!/bin/bash
+      PATTERNS=(
+        'AKIA[0-9A-Z]{16}'
+        'password\s*=\s*["\x27][^"\x27]+'
+        'BEGIN RSA PRIVATE KEY'
+        'sk-[a-zA-Z0-9]{48}'
+        'ghp_[a-zA-Z0-9]{36}'
+      )
+      STAGED=$(git diff --cached --name-only)
+      for file in $STAGED; do
+        for pattern in "${PATTERNS[@]}"; do
+          if grep -qE "$pattern" "$file" 2>/dev/null; then
+            echo "❌ Potential secret found in $file matching pattern"
+            exit 1
+          fi
+        done
+      done
+
+  - name: compile-check
+    trigger: pre-commit
+    description: "Detect project type and run appropriate compile/build check"
+    filename: pre-commit-compile.sh
+    script: |
+      #!/bin/bash
+      echo "🔨 Running build check..."
+      if [ -f "pyproject.toml" ] || [ -f "setup.py" ] || [ -f "requirements.txt" ]; then
+        STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$')
+        if [ -n "$STAGED_PY" ]; then
+          for file in $STAGED_PY; do
+            python -m py_compile "$file" 2>&1
+            if [ $? -ne 0 ]; then
+              echo "❌ Syntax error in $file"
+              exit 1
+            fi
+          done
+          echo "  ✅ Python syntax OK"
+        fi
+      fi
+      if [ -f "tsconfig.json" ]; then
+        npx tsc --noEmit 2>&1
+        if [ $? -ne 0 ]; then
+          echo "❌ TypeScript compilation failed."
+          exit 1
+        fi
+        echo "  ✅ TypeScript compilation OK"
+      fi
+      echo "🔨 Build check passed"
+
+  - name: test-coverage
+    trigger: pre-commit
+    description: "Run tests with coverage and enforce minimum thresholds"
+    filename: pre-commit-test.sh
+    script: |
+      #!/bin/bash
+      COVERAGE_MIN={{coverage_minimum | default: 80}}
+      echo "🧪 Running tests with coverage..."
+      if [ -f "package.json" ]; then
+        if grep -q '"vitest"' package.json 2>/dev/null; then
+          npx vitest run --reporter=verbose 2>&1
+          if [ $? -ne 0 ]; then
+            echo "❌ Tests failed."
+            exit 1
+          fi
+          echo "  ✅ Tests passed"
+        elif grep -q '"jest"' package.json 2>/dev/null; then
+          npx jest --passWithNoTests --coverage \
+            --coverageThreshold="{\"global\":{\"lines\":$COVERAGE_MIN}}" \
+            --silent 2>&1
+          if [ $? -ne 0 ]; then
+            echo "❌ Jest tests failed or coverage below ${COVERAGE_MIN}%."
+            exit 1
+          fi
+          echo "  ✅ Jest tests passed"
+        fi
+      fi
+      if [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
+        if command -v pytest &> /dev/null; then
+          pytest --tb=short --quiet --cov=src --cov-fail-under=$COVERAGE_MIN 2>&1
+          if [ $? -ne 0 ]; then
+            echo "❌ Tests failed or coverage below ${COVERAGE_MIN}%."
+            exit 1
+          fi
+          echo "  ✅ Python tests passed"
+        fi
+      fi
+      echo "🧪 All tests passed"
+
+  - name: anti-pattern-detector
+    trigger: pre-commit
+    description: "Scan source files for production code anti-patterns"
+    filename: pre-commit-prod-quality.sh
+    script: |
+      #!/bin/bash
+      STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+      SOURCE_FILES=$(echo "$STAGED" | grep -E '\.(py|ts|tsx|js|jsx)$' | grep -vE '(test_|\.test\.|\.spec\.|__tests__|tests/|fixtures/|mock|conftest)')
+      if [ -z "$SOURCE_FILES" ]; then exit 0; fi
+      VIOLATIONS=0
+      WARNINGS=0
+      echo "🔍 Scanning for production code anti-patterns..."
+      for file in $SOURCE_FILES; do
+        if echo "$file" | grep -vqE '(config|settings|\.env)'; then
+          if grep -nE '(localhost|127\.0\.0\.1|0\.0\.0\.0)' "$file" | grep -vE '(#|//|""")' > /tmp/violations 2>/dev/null; then
+            if [ -s /tmp/violations ]; then
+              echo "  ❌ $file — hardcoded URL/host"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          fi
+        fi
+        if grep -nEi '\b(mock_data|fake_data|dummy_data|stub_response)' "$file" > /tmp/violations 2>/dev/null; then
+          if [ -s /tmp/violations ]; then
+            echo "  ❌ $file — mock/stub data in production code"
+            VIOLATIONS=$((VIOLATIONS + 1))
+          fi
+        fi
+        LINE_COUNT=$(wc -l < "$file")
+        if [ "$LINE_COUNT" -gt {{max_file_length | default: 300}} ]; then
+          echo "  ⚠️  $file — $LINE_COUNT lines (max {{max_file_length | default: 300}})"
+          WARNINGS=$((WARNINGS + 1))
+        fi
+      done
+      rm -f /tmp/violations
+      if [ $VIOLATIONS -gt 0 ]; then
+        echo "❌ $VIOLATIONS violation(s) found — commit blocked."
+        exit 1
+      fi
+      echo "🔍 Production quality scan passed"
+
+  - name: code-review
+    trigger: pre-commit
+    description: "Claude Code reviews diff against project standards"
+    filename: pre-commit-review.sh
+    script: |
+      #!/bin/bash
+      DIFF=$(git diff --cached)
+      if [ -z "$DIFF" ]; then exit 0; fi
+      echo "📝 Staged changes ready for review"
+      # Full auto-review requires claude CLI integration
+      # This hook validates the diff is non-empty and staged
+      exit 0

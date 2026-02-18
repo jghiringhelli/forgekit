@@ -1,0 +1,68 @@
+{
+  "name": "@forgekit/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server that gives Claude Code production-grade engineering standards — SOLID, testing, architecture, CI/CD — automatically tailored to your stack",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "forgekit-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "claude",
+    "claude-code",
+    "scaffolding",
+    "project-setup",
+    "developer-tools",
+    "code-quality",
+    "engineering-standards",
+    "solid-principles",
+    "testing",
+    "architecture",
+    "claude-md",
+    "ai-coding"
+  ],
+  "author": "JC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jghiringhelli/forgekit.git"
+  },
+  "homepage": "https://github.com/jghiringhelli/forgekit#readme",
+  "bugs": {
+    "url": "https://github.com/jghiringhelli/forgekit/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist/",
+    "templates/",
+    "README.md"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "js-yaml": "^4.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.13.4",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}

@@ -1,0 +1,42 @@
+tag: GAME
+section: claude-md
+blocks:
+  - id: game-loop-timing
+    tier: recommended
+    title: "Game Loop & Frame Timing"
+    content: |
+      ## Game Loop & Frame Timing
+
+      - Use a fixed timestep for game logic updates (e.g., 60 Hz / 16.67ms) decoupled from the render frame rate. This ensures deterministic simulation regardless of display refresh rate.
+      - Accumulate elapsed time and consume it in fixed-size steps. Interpolate visual state between the previous and current simulation state for smooth rendering on variable-rate displays.
+      - Never tie game logic to `requestAnimationFrame` or vsync directly. Use `deltaTime` from a fixed update loop for physics, AI, and gameplay—use `requestAnimationFrame` only for rendering.
+      - Profile frame budgets rigorously. At 60 FPS, the total frame budget is ~16ms. Allocate budgets per system (e.g., physics 3ms, AI 2ms, rendering 8ms, overhead 3ms) and alert on overruns.
+      - Implement a frame rate limiter and graceful degradation: reduce visual quality (particle counts, draw distance, shadow resolution) before dropping simulation fidelity.
+      - Use a time scale factor to support pause, slow motion, and fast-forward without modifying core loop logic.
+
+  - id: ecs-architecture
+    tier: recommended
+    title: "Entity-Component-System Architecture"
+    content: |
+      ## Entity-Component-System (ECS) Architecture
+
+      - Separate identity (Entity), data (Component), and behavior (System). Entities are lightweight IDs; components are plain data structs; systems operate on sets of components.
+      - Organize components for data locality: store components of the same type in contiguous arrays (Struct of Arrays) to maximize CPU cache efficiency during system iteration.
+      - Systems should have no state of their own. They query the world for entities matching a component archetype and process them in a tight loop.
+      - Use component composition over inheritance. A `PlayerCharacter` is an entity with `Position`, `Velocity`, `Sprite`, `Health`, and `Input` components—not a deep class hierarchy.
+      - Implement an event bus or command buffer for deferred entity creation/destruction. Never modify the entity list while iterating over it.
+      - Tag components (zero-size marker components) are useful for filtering: `IsPlayer`, `IsEnemy`, `IsProjectile` let systems query efficiently without data overhead.
+
+  - id: asset-input-management
+    tier: recommended
+    title: "Asset & Input Management"
+    content: |
+      ## Asset Management & Input Handling
+
+      - Preload and cache assets (textures, audio, meshes, fonts) during loading screens. Use an asset manifest to declare all required assets and track loading progress.
+      - Implement reference counting or handle-based asset management. Share loaded assets across entities and unload them only when no references remain.
+      - Use asset atlases (sprite sheets, texture atlases) to reduce draw calls. Batch rendering by texture to minimize GPU state changes.
+      - Abstract input handling behind an action mapping layer. Map physical inputs (keyboard keys, gamepad buttons, touch gestures) to logical actions (`Jump`, `Attack`, `MoveLeft`) defined in a rebindable configuration.
+      - Support input buffering: queue player inputs for a short window (2-5 frames) so that slightly early inputs still register. This dramatically improves perceived responsiveness.
+      - Handle input device hotplugging gracefully. Detect controller connect/disconnect events and update the UI prompts (keyboard glyphs vs. gamepad glyphs) accordingly.
+      - Implement an input replay/recording system for debugging and automated testing. Serialize input streams with frame timestamps for deterministic playback.
