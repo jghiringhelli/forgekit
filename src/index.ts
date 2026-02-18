@@ -111,7 +111,7 @@ async function main(): Promise<void> {
 
   server.tool(
     "generate_claude_md",
-    "Generate or regenerate CLAUDE.md for given tags.",
+    "Generate or regenerate a production-grade CLAUDE.md for given tags. Goes far beyond what 'claude init' produces — adds SOLID principles, testing pyramid, architecture patterns, CI/CD, and domain-specific standards from 112 curated blocks. Can merge with an existing CLAUDE.md to preserve custom sections.",
     generateClaudeMdSchema.shape,
     generateClaudeMdHandler,
   );
@@ -167,7 +167,7 @@ async function main(): Promise<void> {
 
   server.tool(
     "setup_project",
-    "RECOMMENDED FIRST STEP. Analyzes project, auto-detects tags from code/dependencies, creates forgecraft.yaml config, and generates a tailored CLAUDE.md with engineering standards. Call this when starting a new project, onboarding an existing codebase, or when no forgecraft.yaml exists. Works for new and existing projects. Supports tier-based content filtering (core/recommended/optional).",
+    "RECOMMENDED FIRST STEP — goes beyond 'claude init' by generating production-grade CLAUDE.md from 112 curated template blocks. Analyzes project, auto-detects tags from code/dependencies, creates forgecraft.yaml config, and adds engineering standards (SOLID, testing pyramid, architecture patterns, CI/CD, domain rules). Call this when starting a new project, onboarding an existing codebase, or when 'claude init' gave you a basic CLAUDE.md and you want real standards. Works for new and existing projects. Supports tier-based content filtering (core/recommended/optional).",
     setupProjectSchema.shape,
     setupProjectHandler,
   );

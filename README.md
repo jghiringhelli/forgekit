@@ -12,9 +12,11 @@
 
 ---
 
-Claude Code is powerful — but without a CLAUDE.md, it has no opinion about your project. No architecture rules. No testing requirements. No code standards. Every session starts from scratch and you get inconsistent results.
+`claude init` gets you started — it scans your project and generates a basic CLAUDE.md. That's a great first step.
 
-**ForgeCraft fixes that in 30 seconds.**
+**ForgeCraft is the next step.**
+
+`claude init` gives you a generic starting point. ForgeCraft gives you production engineering standards: SOLID principles, testing pyramids with coverage targets, architecture patterns, CI/CD pipelines, domain-specific rules, and quality-gate hooks — all composed from 112 curated template blocks matched to your actual stack.
 
 ```bash
 claude mcp add forgecraft -- npx -y forgecraft-mcp
@@ -26,16 +28,20 @@ Then tell Claude:
 
 Done. Claude now has a tailored CLAUDE.md with SOLID principles, testing standards, architecture patterns, CI/CD guidance, and quality-gate hooks — all matched to your stack.
 
-## Before & After
+## `claude init` vs ForgeCraft
 
-| Without ForgeCraft | With ForgeCraft |
-|---|---|
-| Claude guesses your code style | Claude follows SOLID, clean code, and your architecture |
-| No testing requirements | Testing pyramid with coverage targets (80%+ enforced) |
-| Random folder structures | Consistent feature-based modules |
-| No commit standards | Conventional commits, atomic changes |
-| Each session starts from zero | `Status.md` + `forgecraft.yaml` maintain continuity |
-| Generic advice | Domain-specific patterns (fintech, healthcare, gaming, etc.) |
+| | `claude init` | ForgeCraft |
+|---|---|---|
+| **CLAUDE.md** | Generic, one-size-fits-all | 112 curated blocks matched to your stack |
+| **Architecture** | None | SOLID, hexagonal, clean code, DDD |
+| **Testing** | Basic mention | Testing pyramid with coverage targets (80%+) |
+| **Domain rules** | None | 18 domains (fintech, healthcare, gaming…) |
+| **Commit standards** | None | Conventional commits, atomic changes |
+| **Quality gates** | None | Pre-commit hooks that enforce standards |
+| **CI/CD** | None | Pipeline stages, environments, deploy guidance |
+| **Session continuity** | None | `Status.md` + `forgecraft.yaml` persist context |
+| **Drift detection** | None | `refresh_project` detects scope changes |
+| **Compliance scoring** | None | `audit_project` scores 0-100 |
 
 ## How It Works
 
@@ -50,6 +56,8 @@ Claude calls setup_project → scans your code → detects [API] + [WEB-REACT]
 ```
 
 ForgeCraft is an [MCP server](https://modelcontextprotocol.io/) — it gives Claude 14 specialized tools. Claude picks the right ones automatically. You just describe what you want in plain English.
+
+> **Already ran `claude init`?** ForgeCraft's `generate_claude_md` can merge with your existing CLAUDE.md (`merge_with_existing: true`), keeping your custom sections while adding production standards.
 
 ## Install
 
