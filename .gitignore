@@ -8,3 +8,5 @@ coverage/
 .venv/
 .DS_Store
 Thumbs.db
+.mcpregistry_*
+mcp-publisher*
