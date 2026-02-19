@@ -104,20 +104,126 @@ export type ContentTier = "core" | "recommended" | "optional";
 /** All valid content tiers as a constant array for schema validation. */
 export const CONTENT_TIERS: readonly ContentTier[] = ["core", "recommended", "optional"] as const;
 
-/** A CLAUDE.md content block from a template. */
-export interface ClaudeMdBlock {
+// ── Output Targets ───────────────────────────────────────────────────
+
+/**
+ * Supported AI assistant output targets.
+ * Each target maps to a specific instruction file format.
+ */
+export const ALL_OUTPUT_TARGETS = [
+  "claude",
+  "cursor",
+  "copilot",
+  "windsurf",
+  "cline",
+  "aider",
+] as const;
+
+export type OutputTarget = (typeof ALL_OUTPUT_TARGETS)[number];
+
+/** Configuration for a specific output target. */
+export interface OutputTargetConfig {
+  /** Target identifier. */
+  readonly target: OutputTarget;
+  /** Output filename (e.g., "CLAUDE.md", ".cursorrules"). */
+  readonly filename: string;
+  /** Subdirectory relative to project root, if any (e.g., ".github" for copilot, ".cursor/rules" for cursor). */
+  readonly directory?: string;
+  /** Heading used at the top of the generated file. */
+  readonly heading: string;
+  /** Human-readable display name for the AI tool. */
+  readonly displayName: string;
+  /** Whether the target uses frontmatter metadata (e.g., Cursor .mdc files). */
+  readonly usesFrontmatter?: boolean;
+}
+
+/** Registry of all supported output target configurations. */
+export const OUTPUT_TARGET_CONFIGS: Record<OutputTarget, OutputTargetConfig> = {
+  claude: {
+    target: "claude",
+    filename: "CLAUDE.md",
+    heading: "# CLAUDE.md",
+    displayName: "Claude Code",
+  },
+  cursor: {
+    target: "cursor",
+    filename: "project-standards.mdc",
+    directory: ".cursor/rules",
+    heading: "# Project Standards",
+    displayName: "Cursor",
+    usesFrontmatter: true,
+  },
+  copilot: {
+    target: "copilot",
+    filename: "copilot-instructions.md",
+    directory: ".github",
+    heading: "# Copilot Instructions",
+    displayName: "GitHub Copilot",
+  },
+  windsurf: {
+    target: "windsurf",
+    filename: ".windsurfrules",
+    heading: "# Windsurf Rules",
+    displayName: "Windsurf",
+  },
+  cline: {
+    target: "cline",
+    filename: ".clinerules",
+    heading: "# Cline Rules",
+    displayName: "Cline",
+  },
+  aider: {
+    target: "aider",
+    filename: "CONVENTIONS.md",
+    heading: "# CONVENTIONS.md",
+    displayName: "Aider",
+  },
+};
+
+/** Default output target when none specified. */
+export const DEFAULT_OUTPUT_TARGET: OutputTarget = "claude";
+
+/**
+ * Resolve the full output file path for a target relative to project root.
+ *
+ * @param projectDir - Absolute path to project root
+ * @param target - The output target
+ * @returns Absolute path to the instruction file
+ */
+export function resolveOutputPath(projectDir: string, target: OutputTarget): string {
+  const config = OUTPUT_TARGET_CONFIGS[target];
+  if (config.directory) {
+    return `${projectDir}/${config.directory}/${config.filename}`;
+  }
+  return `${projectDir}/${config.filename}`;
+}
+
+// ── Instruction Blocks (formerly ClaudeMdBlock) ──────────────────────
+
+/** An instruction content block from a template. */
+export interface InstructionBlock {
   readonly id: string;
   readonly title: string;
   readonly content: string;
   readonly tier?: ContentTier;
 }
 
-/** A template YAML file structure for claude-md content. */
-export interface ClaudeMdTemplate {
+/** A template YAML file structure for instruction content. */
+export interface InstructionTemplate {
   readonly tag: Tag;
-  readonly section: "claude-md";
-  readonly blocks: ClaudeMdBlock[];
+  readonly section: "instructions";
+  readonly blocks: InstructionBlock[];
 }
+
+/**
+ * @deprecated Use InstructionBlock instead. Alias kept for backward compatibility.
+ */
+export type ClaudeMdBlock = InstructionBlock;
+
+/**
+ * @deprecated Use InstructionTemplate instead. Alias kept for backward compatibility.
+ */
+export type ClaudeMdTemplate = InstructionTemplate;
 
 /** A folder/file entry in a structure template. */
 export interface StructureEntry {
@@ -208,11 +314,15 @@ export interface ReviewDimensionOutput {
 /** Complete template set for a tag. */
 export interface TagTemplateSet {
   readonly tag: Tag;
-  readonly claudeMd?: ClaudeMdTemplate;
+  readonly instructions?: InstructionTemplate;
   readonly nfr?: NfrTemplate;
   readonly structure?: StructureTemplate;
   readonly hooks?: HookTemplate[];
   readonly review?: ReviewTemplate;
+  /**
+   * @deprecated Use `instructions` instead. Alias kept for backward compatibility.
+   */
+  readonly claudeMd?: InstructionTemplate;
 }
 
 /** Module scaffold configuration. */
@@ -237,6 +347,8 @@ export interface ForgeCraftConfig {
   readonly tags?: Tag[];
   /** Content tier preference: which tiers to auto-include. */
   readonly tier?: ContentTier;
+  /** Output targets: which AI assistant instruction files to generate. Defaults to ['claude']. */
+  readonly outputTargets?: OutputTarget[];
   /** Specific block IDs to always include regardless of tier. */
   readonly include?: string[];
   /** Specific block IDs to always exclude regardless of tier. */

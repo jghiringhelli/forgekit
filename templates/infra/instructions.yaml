@@ -1,5 +1,5 @@
 tag: INFRA
-section: claude-md
+section: instructions
 blocks:
   - id: iac-containers
     tier: recommended

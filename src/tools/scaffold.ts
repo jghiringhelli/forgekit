@@ -7,12 +7,12 @@
 import { z } from "zod";
 import { mkdirSync, writeFileSync, chmodSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { ALL_TAGS } from "../shared/types.js";
-import type { Tag, ScaffoldResult } from "../shared/types.js";
+import { ALL_TAGS, ALL_OUTPUT_TARGETS, OUTPUT_TARGET_CONFIGS, DEFAULT_OUTPUT_TARGET } from "../shared/types.js";
+import type { Tag, ScaffoldResult, OutputTarget } from "../shared/types.js";
 import { loadAllTemplatesWithExtras, loadUserOverrides } from "../registry/loader.js";
 import { composeTemplates } from "../registry/composer.js";
 import {
-  renderClaudeMd,
+  renderInstructionFile,
   renderStatusMd,
   renderPrdSkeleton,
   renderTechSpecSkeleton,
@@ -42,6 +42,10 @@ export const scaffoldProjectSchema = z.object({
     .boolean()
     .default(false)
     .describe("If true, return the plan without writing files."),
+  output_targets: z
+    .array(z.enum(ALL_OUTPUT_TARGETS as unknown as [string, ...string[]]))
+    .default(["claude"])
+    .describe("AI assistant targets to generate instruction files for. Options: claude, cursor, copilot, windsurf, cline, aider."),
 });
 
 // ── Handler ──────────────────────────────────────────────────────────
@@ -78,7 +82,7 @@ export async function scaffoldProjectHandler(
   const filesCreated: string[] = [];
 
   // Render content
-  const claudeMdContent = renderClaudeMd(composed.claudeMdBlocks, context);
+  const outputTargets = (args.output_targets ?? [DEFAULT_OUTPUT_TARGET]) as OutputTarget[];
   const statusMdContent = renderStatusMd(context);
   const prdContent = renderPrdSkeleton(context);
   const techSpecContent = renderTechSpecSkeleton(context);
@@ -97,9 +101,17 @@ export async function scaffoldProjectHandler(
     }
   }
 
-  // Write CLAUDE.md
-  writeFileSafe(join(args.project_dir, "CLAUDE.md"), claudeMdContent);
-  filesCreated.push("CLAUDE.md");
+  // Write instruction files for all output targets
+  for (const target of outputTargets) {
+    const targetConfig = OUTPUT_TARGET_CONFIGS[target];
+    const content = renderInstructionFile(composed.instructionBlocks, context, target);
+    const outputPath = targetConfig.directory
+      ? join(args.project_dir, targetConfig.directory, targetConfig.filename)
+      : join(args.project_dir, targetConfig.filename);
+    mkdirSync(dirname(outputPath), { recursive: true });
+    writeFileSafe(outputPath, content);
+    filesCreated.push(targetConfig.directory ? `${targetConfig.directory}/${targetConfig.filename}` : targetConfig.filename);
+  }
 
   // Write Status.md
   writeFileSafe(join(args.project_dir, "Status.md"), statusMdContent);
@@ -146,7 +158,7 @@ export async function scaffoldProjectHandler(
     filesCreated,
     mcpServersConfigured: [],
     nextSteps: [
-      "Review and adjust CLAUDE.md for your project specifics",
+      "Review and adjust instruction files for your project specifics",
       "Fill in docs/PRD.md with your actual requirements",
       "Fill in docs/TechSpec.md with your architecture decisions",
       "Run `npm install` or equivalent to install dependencies",
@@ -162,7 +174,7 @@ export async function scaffoldProjectHandler(
   text += filesCreated.map((f) => `- \`${f}\``).join("\n");
   text += `\n\n## Next Steps\n`;
   text += result.nextSteps.map((s, i) => `${i + 1}. ${s}`).join("\n");
-  text += `\n\n⚠️ **Restart required** to pick up CLAUDE.md and hooks.`;
+  text += `\n\n⚠️ **Restart may be required** to pick up instruction files and hooks.`;
 
   return { content: [{ type: "text", text }] };
 }

@@ -1,5 +1,5 @@
 tag: STATE-MACHINE
-section: claude-md
+section: instructions
 blocks:
   - id: state-transition-design
     tier: recommended

@@ -2,11 +2,24 @@
  * Template renderer.
  *
  * Renders composed template content with project-specific variable substitution.
+ * Supports multiple output targets (Claude, Cursor, Copilot, Windsurf, Cline, Aider).
  * Handles {{variable}} and {{variable | default: value}} syntax.
  */
 
 import { createLogger } from "../shared/logger/index.js";
-import type { ClaudeMdBlock, NfrBlock, ReviewBlock, ReviewDimension, Tag } from "../shared/types.js";
+import type {
+  InstructionBlock,
+  NfrBlock,
+  ReviewBlock,
+  ReviewDimension,
+  Tag,
+  OutputTarget,
+  OutputTargetConfig,
+} from "../shared/types.js";
+import {
+  OUTPUT_TARGET_CONFIGS,
+  DEFAULT_OUTPUT_TARGET,
+} from "../shared/types.js";
 
 const logger = createLogger("registry/renderer");
 
@@ -23,15 +36,30 @@ export interface RenderContext {
 }
 
 /**
- * Render a CLAUDE.md from composed blocks and project context.
- * Returns the full CLAUDE.md content as a string.
+ * Render an instruction file from composed blocks and project context.
+ * Supports all output targets (Claude, Cursor, Copilot, Windsurf, Cline, Aider).
+ *
+ * @param blocks - Composed instruction blocks
+ * @param context - Project context for variable substitution
+ * @param target - Output target (defaults to "claude")
+ * @returns Full instruction file content as a string
  */
-export function renderClaudeMd(
-  blocks: ClaudeMdBlock[],
+export function renderInstructionFile(
+  blocks: InstructionBlock[],
   context: RenderContext,
+  target: OutputTarget = DEFAULT_OUTPUT_TARGET,
 ): string {
-  const header = buildForgeCraftHeader(context);
-  const sections: string[] = ["# CLAUDE.md\n", header];
+  const targetConfig = OUTPUT_TARGET_CONFIGS[target];
+  const header = buildHeader(context, targetConfig);
+  const sections: string[] = [];
+
+  // Cursor .mdc files use frontmatter
+  if (targetConfig.usesFrontmatter) {
+    sections.push(buildCursorFrontmatter(context));
+  }
+
+  sections.push(`${targetConfig.heading}\n`);
+  sections.push(header);
 
   for (const block of blocks) {
     const rendered = renderTemplate(block.content, context);
@@ -42,26 +70,48 @@ export function renderClaudeMd(
 }
 
 /**
- * Build the ForgeCraft metadata header for CLAUDE.md.
- * This section tells Claude that the project is managed by ForgeCraft
- * and what tools are available for maintenance.
+ * @deprecated Use renderInstructionFile instead. Kept for backward compatibility.
  */
-function buildForgeCraftHeader(context: RenderContext): string {
+export function renderClaudeMd(
+  blocks: InstructionBlock[],
+  context: RenderContext,
+): string {
+  return renderInstructionFile(blocks, context, "claude");
+}
+
+/**
+ * Build the ForgeCraft metadata header for the instruction file.
+ * Adapts messaging based on the output target.
+ */
+function buildHeader(context: RenderContext, targetConfig: OutputTargetConfig): string {
   const date = new Date().toISOString().split("T")[0];
   const tagList = context.tags.map((t) => `\`${t}\``).join(", ");
   return (
-    `<!-- ForgeCraft managed | ${date} -->\n` +
-    `> **This project is managed by [ForgeCraft](https://github.com/jghiringhelli/forgecraft-mcp).**\n` +
+    `<!-- ForgeCraft managed | ${date} | target: ${targetConfig.target} -->\n` +
+    `> **This project is managed by [ForgeCraft](https://github.com/jghiringhelli/forgecraft-mcp).** Generated for ${targetConfig.displayName}.\n` +
     `> Tags: ${tagList}\n` +
     `>\n` +
     `> Available commands:\n` +
-    `> - \`setup_project\` — re-run full setup (detects tags, generates config + CLAUDE.md)\n` +
+    `> - \`setup_project\` — re-run full setup (detects tags, generates instruction files)\n` +
     `> - \`refresh_project\` — detect drift, update tags/tier after project scope changes\n` +
     `> - \`audit_project\` — score compliance, find gaps\n` +
     `> - \`review_project\` — structured code review checklist\n` +
     `> - \`scaffold_project\` — generate folders, hooks, docs skeletons\n` +
     `>\n` +
     `> Config: \`forgecraft.yaml\` | Tier system: core → recommended → optional\n`
+  );
+}
+
+/**
+ * Build Cursor-specific MDC frontmatter.
+ */
+function buildCursorFrontmatter(context: RenderContext): string {
+  return (
+    `---\n` +
+    `description: Engineering standards for ${context.projectName}\n` +
+    `globs:\n` +
+    `alwaysApply: true\n` +
+    `---\n`
   );
 }
 

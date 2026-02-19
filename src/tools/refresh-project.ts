@@ -7,16 +7,16 @@
  */
 
 import { z } from "zod";
-import { writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { join, dirname } from "node:path";
 import yaml from "js-yaml";
-import { ALL_TAGS, CONTENT_TIERS } from "../shared/types.js";
-import type { Tag, ContentTier, ForgeCraftConfig } from "../shared/types.js";
+import { ALL_TAGS, CONTENT_TIERS, ALL_OUTPUT_TARGETS, OUTPUT_TARGET_CONFIGS, DEFAULT_OUTPUT_TARGET } from "../shared/types.js";
+import type { Tag, ContentTier, ForgeCraftConfig, OutputTarget } from "../shared/types.js";
 import { analyzeProject } from "../analyzers/package-json.js";
 import { checkCompleteness } from "../analyzers/completeness.js";
 import { loadAllTemplatesWithExtras, loadUserOverrides } from "../registry/loader.js";
 import { composeTemplates } from "../registry/composer.js";
-import { renderClaudeMd } from "../registry/renderer.js";
+import { renderInstructionFile } from "../registry/renderer.js";
 import { createLogger } from "../shared/logger/index.js";
 
 const logger = createLogger("tools/refresh-project");
@@ -46,6 +46,10 @@ export const refreshProjectSchema = z.object({
     .array(z.enum(ALL_TAGS as unknown as [string, ...string[]]))
     .optional()
     .describe("Explicitly remove these tags during refresh."),
+  output_targets: z
+    .array(z.enum(ALL_OUTPUT_TARGETS as unknown as [string, ...string[]]))
+    .optional()
+    .describe("Override output targets. If omitted, uses current config value or defaults to ['claude']."),
 });
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -119,14 +123,23 @@ export async function refreshProjectHandler(
   const configYaml = yaml.dump(updatedConfig, { lineWidth: 100, noRefs: true });
   writeFileSync(join(projectDir, "forgecraft.yaml"), configYaml, "utf-8");
 
-  // Regenerate CLAUDE.md
+  // Regenerate instruction files for all targets
+  const outputTargets = (args.output_targets ?? updatedConfig.outputTargets ?? [DEFAULT_OUTPUT_TARGET]) as OutputTarget[];
   const context = {
     projectName: updatedConfig.projectName ?? inferProjectName(projectDir),
     language: "typescript" as const,
     tags: updatedTags,
   };
-  const claudeContent = renderClaudeMd(composed.claudeMdBlocks, context);
-  writeFileSync(join(projectDir, "CLAUDE.md"), claudeContent, "utf-8");
+
+  for (const target of outputTargets) {
+    const targetConfig = OUTPUT_TARGET_CONFIGS[target];
+    const content = renderInstructionFile(composed.instructionBlocks, context, target);
+    const outputPath = targetConfig.directory
+      ? join(projectDir, targetConfig.directory, targetConfig.filename)
+      : join(projectDir, targetConfig.filename);
+    mkdirSync(dirname(outputPath), { recursive: true });
+    writeFileSync(outputPath, content, "utf-8");
+  }
 
   return {
     content: [{
@@ -307,8 +320,8 @@ function buildPreviewOutput(
 
   // Block delta
   text += `## Content Impact\n`;
-  text += `- CLAUDE.md blocks: ${drift.blockCountDelta.before} → ${drift.blockCountDelta.after}\n`;
-  text += `- Total available: ${composed.claudeMdBlocks.length} blocks, ${composed.nfrBlocks.length} NFRs, ${composed.hooks.length} hooks\n\n`;
+  text += `- Instruction blocks: ${drift.blockCountDelta.before} → ${drift.blockCountDelta.after}\n`;
+  text += `- Total available: ${composed.instructionBlocks.length} blocks, ${composed.nfrBlocks.length} NFRs, ${composed.hooks.length} hooks\n\n`;
 
   // Gaps
   if (drift.completenessGaps.length > 0) {
@@ -339,7 +352,7 @@ function buildAppliedOutput(
 
   text += `## Changes Applied\n`;
   text += `- forgecraft.yaml — updated\n`;
-  text += `- CLAUDE.md — regenerated (${composed.claudeMdBlocks.length} blocks)\n\n`;
+  text += `- Instruction files — regenerated (${composed.instructionBlocks.length} blocks)\n\n`;
 
   if (drift.newTagSuggestions.length > 0) {
     const added = drift.newTagSuggestions.filter((s) => s.confidence >= 0.6);

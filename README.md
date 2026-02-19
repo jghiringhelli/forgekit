@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">ForgeCraft</h1>
   <p align="center">
-    <strong>Give Claude Code real engineering standards. Automatically.</strong>
+    <strong>Production engineering standards for any AI coding assistant.</strong>
   </p>
   <p align="center">
     <a href="https://www.npmjs.com/package/forgecraft-mcp"><img src="https://img.shields.io/npm/v/forgecraft-mcp.svg" alt="npm version"></a>
@@ -12,11 +12,9 @@
 
 ---
 
-`claude init` gets you started — it scans your project and generates a basic CLAUDE.md. That's a great first step.
+AI coding assistants work better with clear engineering standards. Most start with a generic instruction file — ForgeCraft replaces that with production-grade standards: SOLID principles, testing pyramids, architecture patterns, CI/CD pipelines, domain-specific rules, and quality-gate hooks — all composed from 112 curated template blocks matched to your actual stack.
 
-**ForgeCraft is the next step.**
-
-`claude init` gives you a generic starting point. ForgeCraft gives you production engineering standards: SOLID principles, testing pyramids with coverage targets, architecture patterns, CI/CD pipelines, domain-specific rules, and quality-gate hooks — all composed from 112 curated template blocks matched to your actual stack.
+**Supports:** Claude (CLAUDE.md) · Cursor (.cursor/rules/) · GitHub Copilot (.github/copilot-instructions.md) · Windsurf (.windsurfrules) · Cline (.clinerules) · Aider (CONVENTIONS.md)
 
 ```bash
 claude mcp add forgecraft -- npx -y forgecraft-mcp
@@ -26,13 +24,14 @@ Then tell Claude:
 
 > "Set up this project for production"
 
-Done. Claude now has a tailored CLAUDE.md with SOLID principles, testing standards, architecture patterns, CI/CD guidance, and quality-gate hooks — all matched to your stack.
+Done. Your AI assistant now has tailored instruction files with SOLID principles, testing standards, architecture patterns, CI/CD guidance, and quality-gate hooks — all matched to your stack.
 
 ## `claude init` vs ForgeCraft
 
 | | `claude init` | ForgeCraft |
 |---|---|---|
-| **CLAUDE.md** | Generic, one-size-fits-all | 112 curated blocks matched to your stack |
+| **Instruction file** | Generic, one-size-fits-all | 112 curated blocks matched to your stack |
+| **AI assistants** | Claude only | Claude, Cursor, Copilot, Windsurf, Cline, Aider |
 | **Architecture** | None | SOLID, hexagonal, clean code, DDD |
 | **Testing** | Basic mention | Testing pyramid with coverage targets (80%+) |
 | **Domain rules** | None | 18 domains (fintech, healthcare, gaming…) |
@@ -50,14 +49,14 @@ You: "Set up this project for production"
 
 Claude calls setup_project → scans your code → detects [API] + [WEB-REACT]
                            → creates forgecraft.yaml
-                           → generates CLAUDE.md from 112 curated template blocks
+                           → generates instruction files for your AI assistant(s)
                            → adds quality-gate hooks
                            → done
 ```
 
 ForgeCraft is an [MCP server](https://modelcontextprotocol.io/) — it gives Claude 14 specialized tools. Claude picks the right ones automatically. You just describe what you want in plain English.
 
-> **Already ran `claude init`?** ForgeCraft's `generate_claude_md` can merge with your existing CLAUDE.md (`merge_with_existing: true`), keeping your custom sections while adding production standards.
+> **Already ran `claude init`?** ForgeCraft's `generate_instructions` can merge with your existing CLAUDE.md (`merge_with_existing: true`), keeping your custom sections while adding production standards.
 
 ## Install
 
@@ -92,7 +91,9 @@ After `setup_project`, your project has:
 ```
 your-project/
 ├── forgecraft.yaml        ← Your config (tags, tier, customizations)
-├── CLAUDE.md              ← Engineering standards tailored to your stack
+├── CLAUDE.md              ← Engineering standards (Claude)
+├── .cursor/rules/         ← Engineering standards (Cursor)
+├── .github/copilot-instructions.md  ← Engineering standards (Copilot)
 ├── Status.md              ← Session continuity tracker
 ├── .claude/hooks/         ← Pre-commit quality gates
 ├── docs/
@@ -101,7 +102,7 @@ your-project/
 └── src/shared/            ← Config, errors, logger starters
 ```
 
-### The CLAUDE.md
+### The Instruction Files
 
 This is the core value. Assembled from curated blocks covering:
 
@@ -165,7 +166,7 @@ tier: recommended
 | `refresh_project` | Re-scan after changes. Detects new tags, updates config. |
 | `classify_project` | Analyze code to suggest tags |
 | `scaffold_project` | Generate full project structure |
-| `generate_claude_md` | Create/regenerate CLAUDE.md |
+| `generate_instructions` | Create instruction files for any AI assistant |
 | `audit_project` | Score compliance (0-100). Run in CI. |
 | `review_project` | Structured review checklist |
 | `convert_existing` | Phased migration plan for legacy code |
@@ -185,6 +186,7 @@ tier: recommended
 projectName: my-api
 tags: [UNIVERSAL, API, FINTECH]
 tier: recommended
+outputTargets: [claude, cursor, copilot]  # Generate for multiple assistants
 
 exclude:
   - cqrs-event-patterns    # Don't need this yet
@@ -209,7 +211,7 @@ templateDirs:
 ```
 Score: 72/100  Grade: C
 
-✅ CLAUDE.md exists
+✅ Instruction files exist
 ✅ Hooks installed (3/3)
 ✅ Test script configured
 🔴 hardcoded_url: src/auth/service.ts
@@ -227,7 +229,7 @@ Templates are YAML, not code. You can add patterns without writing TypeScript.
 
 ```
 templates/your-tag/
-├── claude-md.yaml      # CLAUDE.md blocks (with tier metadata)
+├── instructions.yaml   # Instruction file blocks (with tier metadata)
 ├── structure.yaml      # Folder structure
 ├── nfr.yaml            # Non-functional requirements
 ├── hooks.yaml          # Quality gate scripts

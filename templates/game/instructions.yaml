@@ -1,5 +1,5 @@
 tag: GAME
-section: claude-md
+section: instructions
 blocks:
   - id: game-loop-timing
     tier: recommended

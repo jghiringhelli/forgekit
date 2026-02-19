@@ -14,7 +14,7 @@ import { TemplateNotFoundError, TemplateParseError } from "../shared/errors/inde
 import type {
   Tag,
   TagTemplateSet,
-  ClaudeMdTemplate,
+  InstructionTemplate,
   NfrTemplate,
   StructureTemplate,
   HookTemplate,
@@ -98,16 +98,24 @@ export function loadAllTemplates(
  * Load a single tag's template set from its directory.
  */
 function loadTagTemplateSet(tag: Tag, tagDir: string): TagTemplateSet {
-  let claudeMd: ClaudeMdTemplate | undefined;
+  let instructions: InstructionTemplate | undefined;
   let nfr: NfrTemplate | undefined;
   let structure: StructureTemplate | undefined;
   let hooks: HookTemplate[] | undefined;
   let review: ReviewTemplate | undefined;
 
-  // Load claude-md.yaml
-  const claudeMdPath = join(tagDir, "claude-md.yaml");
-  if (existsSync(claudeMdPath)) {
-    claudeMd = loadYamlFile<ClaudeMdTemplate>(claudeMdPath);
+  // Load instructions.yaml (formerly claude-md.yaml)
+  const instructionsPath = join(tagDir, "instructions.yaml");
+  if (existsSync(instructionsPath)) {
+    instructions = loadYamlFile<InstructionTemplate>(instructionsPath);
+  }
+
+  // Backward compat: try claude-md.yaml if instructions.yaml not found
+  if (!instructions) {
+    const legacyPath = join(tagDir, "claude-md.yaml");
+    if (existsSync(legacyPath)) {
+      instructions = loadYamlFile<InstructionTemplate>(legacyPath);
+    }
   }
 
   // Load nfr.yaml
@@ -135,7 +143,7 @@ function loadTagTemplateSet(tag: Tag, tagDir: string): TagTemplateSet {
     review = loadYamlFile<ReviewTemplate>(reviewPath);
   }
 
-  return { tag, claudeMd, nfr, structure, hooks, review };
+  return { tag, instructions, nfr, structure, hooks, review };
 }
 
 /**
@@ -269,7 +277,7 @@ export function loadAllTemplatesWithExtras(
       // Merge each template section additively
       const merged: TagTemplateSet = {
         tag,
-        claudeMd: mergeClaudeMdTemplates(baseSet.claudeMd, extraSet.claudeMd),
+        instructions: mergeInstructionTemplates(baseSet.instructions, extraSet.instructions),
         nfr: mergeNfrTemplates(baseSet.nfr, extraSet.nfr),
         structure: extraSet.structure ?? baseSet.structure,
         hooks: mergeHookTemplates(baseSet.hooks, extraSet.hooks),
@@ -283,12 +291,12 @@ export function loadAllTemplatesWithExtras(
 }
 
 /**
- * Merge two ClaudeMdTemplates, appending non-duplicate blocks from the extra template.
+ * Merge two InstructionTemplates, appending non-duplicate blocks from the extra template.
  */
-function mergeClaudeMdTemplates(
-  base: ClaudeMdTemplate | undefined,
-  extra: ClaudeMdTemplate | undefined,
-): ClaudeMdTemplate | undefined {
+function mergeInstructionTemplates(
+  base: InstructionTemplate | undefined,
+  extra: InstructionTemplate | undefined,
+): InstructionTemplate | undefined {
   if (!extra) return base;
   if (!base) return extra;
   const seenIds = new Set(base.blocks.map((b) => b.id));

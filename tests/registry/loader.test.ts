@@ -29,10 +29,10 @@ describe("loader", () => {
       expect(templates.has("CLI")).toBe(true);
     });
 
-    it("should load UNIVERSAL claude-md blocks", () => {
+    it("should load UNIVERSAL instruction blocks", () => {
       const universal = templates.get("UNIVERSAL")!;
-      expect(universal.claudeMd).toBeDefined();
-      expect(universal.claudeMd!.blocks.length).toBeGreaterThan(0);
+      expect(universal.instructions).toBeDefined();
+      expect(universal.instructions!.blocks.length).toBeGreaterThan(0);
     });
 
     it("should load UNIVERSAL structure entries", () => {
@@ -80,16 +80,16 @@ describe("loader", () => {
       }
     });
 
-    it("should load API-specific claude-md blocks", () => {
+    it("should load API-specific instruction blocks", () => {
       const api = templates.get("API")!;
-      expect(api.claudeMd).toBeDefined();
-      expect(api.claudeMd!.blocks.some((b) => b.id === "api-standards")).toBe(true);
+      expect(api.instructions).toBeDefined();
+      expect(api.instructions!.blocks.some((b) => b.id === "api-standards")).toBe(true);
     });
 
     it("should have unique block IDs within a template", () => {
       for (const [_tag, templateSet] of templates) {
-        if (templateSet.claudeMd?.blocks) {
-          const ids = templateSet.claudeMd.blocks.map((b) => b.id);
+        if (templateSet.instructions?.blocks) {
+          const ids = templateSet.instructions.blocks.map((b) => b.id);
           expect(new Set(ids).size).toBe(ids.length);
         }
       }

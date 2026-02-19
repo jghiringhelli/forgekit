@@ -1,5 +1,5 @@
 tag: HEALTHCARE
-section: claude-md
+section: instructions
 blocks:
   - id: hipaa-compliance
     tier: recommended

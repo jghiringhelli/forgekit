@@ -1,5 +1,5 @@
 tag: ANALYTICS
-section: claude-md
+section: instructions
 blocks:
   - id: analytics-architecture
     tier: recommended

@@ -1,5 +1,5 @@
 tag: UNIVERSAL
-section: claude-md
+section: instructions
 blocks:
   - id: project-identity
     tier: core
@@ -458,7 +458,7 @@ blocks:
     title: "Engineering Preferences"
     content: |
       ## Engineering Preferences
-      These calibrate Claude Code's judgment on subjective trade-offs.
+      These calibrate the AI assistant's judgment on subjective trade-offs.
       - **DRY is important** — flag repetition aggressively.
       - **Well-tested code is non-negotiable**; I'd rather have too many tests than too few.
       - **"Engineered enough"** — not under-engineered (fragile, hacky) and not over-engineered
@@ -474,4 +474,4 @@ blocks:
       ## Corrections Log
       When I correct your output, record the correction pattern here so you don't repeat it.
       ### Learned Corrections
-      - [CC appends corrections here with date and description]
+      - [AI assistant appends corrections here with date and description]

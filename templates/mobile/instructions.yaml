@@ -1,5 +1,5 @@
 tag: MOBILE
-section: claude-md
+section: instructions
 blocks:
   - id: responsive-offline
     tier: recommended

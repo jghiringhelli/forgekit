@@ -1,5 +1,5 @@
 tag: LIBRARY
-section: claude-md
+section: instructions
 blocks:
   - id: library-standards
     tier: recommended

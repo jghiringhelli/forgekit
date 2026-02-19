@@ -27,8 +27,8 @@ import {
   scaffoldProjectHandler,
 } from "./tools/scaffold.js";
 import {
-  generateClaudeMdSchema,
-  generateClaudeMdHandler,
+  generateInstructionsSchema,
+  generateInstructionsHandler,
 } from "./tools/generate-claude-md.js";
 import {
   auditProjectSchema,
@@ -104,16 +104,16 @@ async function main(): Promise<void> {
 
   server.tool(
     "scaffold_project",
-    "Generate full project structure (CLAUDE.md, Status.md, hooks, folders) from tags.",
+    "Generate full project structure (instruction files, Status.md, hooks, folders) from tags. Supports multiple AI assistant targets.",
     scaffoldProjectSchema.shape,
     scaffoldProjectHandler,
   );
 
   server.tool(
-    "generate_claude_md",
-    "Generate or regenerate a production-grade CLAUDE.md for given tags. Goes far beyond what 'claude init' produces — adds SOLID principles, testing pyramid, architecture patterns, CI/CD, and domain-specific standards from 112 curated blocks. Can merge with an existing CLAUDE.md to preserve custom sections.",
-    generateClaudeMdSchema.shape,
-    generateClaudeMdHandler,
+    "generate_instructions",
+    "Generate AI assistant instruction files for given tags. Supports multiple targets: Claude (CLAUDE.md), Cursor (.cursor/rules/), GitHub Copilot (.github/copilot-instructions.md), Windsurf (.windsurfrules), Cline (.clinerules), Aider (CONVENTIONS.md). Adds SOLID principles, testing pyramid, architecture patterns, CI/CD, and domain-specific standards from 112 curated blocks. Can merge with existing files to preserve custom sections.",
+    generateInstructionsSchema.shape,
+    generateInstructionsHandler,
   );
 
   server.tool(
@@ -167,14 +167,14 @@ async function main(): Promise<void> {
 
   server.tool(
     "setup_project",
-    "RECOMMENDED FIRST STEP — goes beyond 'claude init' by generating production-grade CLAUDE.md from 112 curated template blocks. Analyzes project, auto-detects tags from code/dependencies, creates forgecraft.yaml config, and adds engineering standards (SOLID, testing pyramid, architecture patterns, CI/CD, domain rules). Call this when starting a new project, onboarding an existing codebase, or when 'claude init' gave you a basic CLAUDE.md and you want real standards. Works for new and existing projects. Supports tier-based content filtering (core/recommended/optional).",
+    "RECOMMENDED FIRST STEP — generates production-grade AI assistant instruction files from 112 curated template blocks. Supports Claude, Cursor, Copilot, Windsurf, Cline, and Aider. Analyzes project, auto-detects tags from code/dependencies, creates forgecraft.yaml config, and adds engineering standards (SOLID, testing pyramid, architecture patterns, CI/CD, domain rules). Works for new and existing projects. Supports tier-based content filtering (core/recommended/optional).",
     setupProjectSchema.shape,
     setupProjectHandler,
   );
 
   server.tool(
     "refresh_project",
-    "Re-analyze a project that already has forgecraft.yaml. Detects tag drift (e.g. new framework added), proposes adding/removing tags, shows content impact. Use when project scope changes, new dependencies are added, or to upgrade content tier. Preview changes before applying.",
+    "Re-analyze a project that already has forgecraft.yaml. Detects tag drift (e.g. new framework added), proposes adding/removing tags, shows content impact. Updates instruction files for all configured AI assistant targets. Preview changes before applying.",
     refreshProjectSchema.shape,
     refreshProjectHandler,
   );

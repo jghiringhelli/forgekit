@@ -20,22 +20,22 @@ function createProject(name: string, files: Record<string, string> = {}): string
 }
 
 describe("completeness analyzer", () => {
-  it("should fail when CLAUDE.md is missing", () => {
-    const dir = createProject("no-claude-md");
+  it("should fail when no instruction file exists", () => {
+    const dir = createProject("no-instruction-file");
     const result = checkCompleteness(dir, ["UNIVERSAL"]);
 
-    expect(result.failing.some((f) => f.check === "claude_md_exists")).toBe(true);
+    expect(result.failing.some((f) => f.check === "instruction_file_exists")).toBe(true);
 
     rmSync(dir, { recursive: true });
   });
 
-  it("should pass when CLAUDE.md exists", () => {
-    const dir = createProject("has-claude-md", {
+  it("should pass when an instruction file exists", () => {
+    const dir = createProject("has-instruction-file", {
       "CLAUDE.md": "# CLAUDE.md\nProject instructions",
     });
     const result = checkCompleteness(dir, ["UNIVERSAL"]);
 
-    expect(result.passing.some((p) => p.check === "claude_md_exists")).toBe(true);
+    expect(result.passing.some((p) => p.check === "instruction_file_exists")).toBe(true);
 
     rmSync(dir, { recursive: true });
   });

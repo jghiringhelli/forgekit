@@ -10,7 +10,7 @@ import { createLogger } from "../shared/logger/index.js";
 import type {
   Tag,
   TagTemplateSet,
-  ClaudeMdBlock,
+  InstructionBlock,
   StructureEntry,
   NfrBlock,
   HookTemplate,
@@ -39,11 +39,15 @@ const DEFAULT_TIER: ContentTier = "recommended";
 
 /** Composed output for a set of active tags. */
 export interface ComposedTemplates {
-  readonly claudeMdBlocks: ClaudeMdBlock[];
+  readonly instructionBlocks: InstructionBlock[];
   readonly structureEntries: StructureEntry[];
   readonly nfrBlocks: NfrBlock[];
   readonly hooks: HookTemplate[];
   readonly reviewBlocks: ReviewBlock[];
+  /**
+   * @deprecated Use `instructionBlocks` instead. Alias for backward compatibility.
+   */
+  readonly claudeMdBlocks: InstructionBlock[];
 }
 
 /** Options for controlling template composition. */
@@ -113,7 +117,7 @@ export function composeTemplates(
   // Ensure UNIVERSAL is first and present
   const orderedTags = normalizeTagOrder(activeTags);
 
-  const claudeMdBlocks: ClaudeMdBlock[] = [];
+  const instructionBlocks: InstructionBlock[] = [];
   const structureEntries: StructureEntry[] = [];
   const nfrBlocks: NfrBlock[] = [];
   const hooks: HookTemplate[] = [];
@@ -132,16 +136,17 @@ export function composeTemplates(
       continue;
     }
 
-    // Compose CLAUDE.md blocks (deduplicate by id, filter by tier)
-    if (templateSet.claudeMd?.blocks) {
-      for (const block of templateSet.claudeMd.blocks) {
+    // Compose instruction blocks (deduplicate by id, filter by tier)
+    const instrSource = templateSet.instructions ?? templateSet.claudeMd;
+    if (instrSource?.blocks) {
+      for (const block of instrSource.blocks) {
         if (
           !seenBlockIds.has(block.id) &&
           isTierAllowed(block.tier, allowedTiers) &&
           isBlockAllowed(block.id, includeList, excludeList)
         ) {
           seenBlockIds.add(block.id);
-          claudeMdBlocks.push(block);
+          instructionBlocks.push(block);
         }
       }
     }
@@ -198,14 +203,22 @@ export function composeTemplates(
   logger.info("Templates composed", {
     tags: orderedTags,
     tier: tierLevel,
-    claudeMdBlocks: claudeMdBlocks.length,
+    instructionBlocks: instructionBlocks.length,
     structureEntries: structureEntries.length,
     nfrBlocks: nfrBlocks.length,
     hooks: hooks.length,
     reviewBlocks: reviewBlocks.length,
   });
 
-  return { claudeMdBlocks, structureEntries, nfrBlocks, hooks, reviewBlocks };
+  return {
+    instructionBlocks,
+    structureEntries,
+    nfrBlocks,
+    hooks,
+    reviewBlocks,
+    // Backward-compat alias
+    claudeMdBlocks: instructionBlocks,
+  };
 }
 
 /**

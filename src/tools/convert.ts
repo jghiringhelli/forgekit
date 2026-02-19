@@ -108,8 +108,8 @@ function buildMigrationPlan(
 
   // Phase 1: Foundation (always first)
   const foundationSteps: string[] = [];
-  if (missingChecks.has("claude_md_exists")) {
-    foundationSteps.push("Generate CLAUDE.md with `generate_claude_md`");
+  if (missingChecks.has("instruction_file_exists")) {
+    foundationSteps.push("Generate instruction files with `generate_instructions`");
   }
   if (missingChecks.has("status_md_exists")) {
     foundationSteps.push("Create Status.md for session continuity");

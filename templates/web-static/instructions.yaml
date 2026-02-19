@@ -1,5 +1,5 @@
 tag: WEB-STATIC
-section: claude-md
+section: instructions
 blocks:
   - id: static-site-architecture
     tier: recommended

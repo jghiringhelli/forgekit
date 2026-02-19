@@ -1,5 +1,5 @@
 tag: CLI
-section: claude-md
+section: instructions
 blocks:
   - id: cli-standards
     tier: recommended

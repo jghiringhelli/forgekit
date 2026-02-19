@@ -1,21 +1,22 @@
 /**
- * generate_claude_md tool handler.
+ * generate_instructions tool handler.
  *
- * Generates or regenerates CLAUDE.md for given tags.
+ * Generates instruction files for AI assistants (Claude, Cursor, Copilot, Windsurf, Cline, Aider).
+ * Replaces the former generate_claude_md tool with multi-target support.
  */
 
 import { z } from "zod";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { ALL_TAGS } from "../shared/types.js";
-import type { Tag } from "../shared/types.js";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { ALL_TAGS, ALL_OUTPUT_TARGETS, OUTPUT_TARGET_CONFIGS, DEFAULT_OUTPUT_TARGET } from "../shared/types.js";
+import type { Tag, OutputTarget } from "../shared/types.js";
 import { loadAllTemplatesWithExtras, loadUserOverrides } from "../registry/loader.js";
 import { composeTemplates } from "../registry/composer.js";
-import { renderClaudeMd } from "../registry/renderer.js";
+import { renderInstructionFile } from "../registry/renderer.js";
 
 // ── Schema ───────────────────────────────────────────────────────────
 
-export const generateClaudeMdSchema = z.object({
+export const generateInstructionsSchema = z.object({
   tags: z
     .array(z.enum(ALL_TAGS as unknown as [string, ...string[]]))
     .min(1)
@@ -23,25 +24,34 @@ export const generateClaudeMdSchema = z.object({
   project_dir: z
     .string()
     .optional()
-    .describe("Absolute path to project. If provided, writes CLAUDE.md to disk."),
+    .describe("Absolute path to project. If provided, writes instruction files to disk."),
   project_name: z
     .string()
     .default("My Project")
     .describe("Project name for variable substitution."),
+  output_targets: z
+    .array(z.enum(ALL_OUTPUT_TARGETS as unknown as [string, ...string[]]))
+    .default(["claude"])
+    .describe("AI assistant targets to generate for. Defaults to ['claude']. Options: claude, cursor, copilot, windsurf, cline, aider."),
   merge_with_existing: z
     .boolean()
     .default(false)
-    .describe("If true, merge with existing CLAUDE.md instead of replacing."),
+    .describe("If true, merge with existing instruction files instead of replacing."),
 });
+
+/** @deprecated Use generateInstructionsSchema instead. */
+export const generateClaudeMdSchema = generateInstructionsSchema;
 
 // ── Handler ──────────────────────────────────────────────────────────
 
-export async function generateClaudeMdHandler(
-  args: z.infer<typeof generateClaudeMdSchema>,
+export async function generateInstructionsHandler(
+  args: z.infer<typeof generateInstructionsSchema>,
 ): Promise<{ content: Array<{ type: "text"; text: string }> }> {
   const tags: Tag[] = args.tags.includes("UNIVERSAL")
     ? (args.tags as Tag[])
     : (["UNIVERSAL", ...args.tags] as Tag[]);
+
+  const targets = (args.output_targets ?? [DEFAULT_OUTPUT_TARGET]) as OutputTarget[];
 
   const userConfig = args.project_dir ? loadUserOverrides(args.project_dir) : null;
   const templateSets = await loadAllTemplatesWithExtras(
@@ -58,48 +68,74 @@ export async function generateClaudeMdHandler(
     tags,
   };
 
-  let claudeMdContent = renderClaudeMd(composed.claudeMdBlocks, context);
+  const filesWritten: string[] = [];
+  const targetSummaries: string[] = [];
 
-  // Handle merge with existing
-  if (args.merge_with_existing && args.project_dir) {
-    const existingPath = join(args.project_dir, "CLAUDE.md");
-    if (existsSync(existingPath)) {
-      const existing = readFileSync(existingPath, "utf-8");
-      claudeMdContent = mergeClaudeMd(existing, claudeMdContent);
+  for (const target of targets) {
+    const targetConfig = OUTPUT_TARGET_CONFIGS[target];
+    let content = renderInstructionFile(composed.instructionBlocks, context, target);
+
+    // Handle merge with existing
+    if (args.merge_with_existing && args.project_dir) {
+      const existingPath = resolveTargetPath(args.project_dir, target);
+      if (existsSync(existingPath)) {
+        const existing = readFileSync(existingPath, "utf-8");
+        content = mergeInstructionFile(existing, content);
+      }
+    }
+
+    // Write to disk if project_dir provided
+    if (args.project_dir) {
+      const targetPath = resolveTargetPath(args.project_dir, target);
+      mkdirSync(dirname(targetPath), { recursive: true });
+      writeFileSync(targetPath, content, "utf-8");
+      filesWritten.push(targetPath);
+      targetSummaries.push(`- **${targetConfig.displayName}**: \`${targetConfig.directory ? targetConfig.directory + "/" : ""}${targetConfig.filename}\``);
     }
   }
 
-  // Write to disk if project_dir provided
-  if (args.project_dir) {
-    const targetPath = join(args.project_dir, "CLAUDE.md");
-    writeFileSync(targetPath, claudeMdContent, "utf-8");
-
+  if (args.project_dir && filesWritten.length > 0) {
     return {
       content: [
         {
           type: "text",
-          text: `CLAUDE.md generated and written to \`${targetPath}\`.\n\n**Tags:** ${tags.map((t) => `[${t}]`).join(" ")}\n**Blocks:** ${composed.claudeMdBlocks.length}\n\n⚠️ Restart required to pick up changes.`,
+          text: `# Instruction Files Generated\n\n**Tags:** ${tags.map((t) => `[${t}]`).join(" ")}\n**Blocks:** ${composed.instructionBlocks.length}\n\n## Files Written\n${targetSummaries.join("\n")}\n\n⚠️ Restart may be required to pick up changes.`,
         },
       ],
     };
   }
 
-  // Return content only
+  // Return content for first target only (when no project_dir)
+  const content = renderInstructionFile(composed.instructionBlocks, context, targets[0]!);
   return {
     content: [
       {
         type: "text",
-        text: claudeMdContent,
+        text: content,
       },
     ],
   };
 }
 
+/** @deprecated Use generateInstructionsHandler instead. */
+export const generateClaudeMdHandler = generateInstructionsHandler;
+
 /**
- * Merge generated CLAUDE.md with existing one.
+ * Resolve the full file path for an output target.
+ */
+function resolveTargetPath(projectDir: string, target: OutputTarget): string {
+  const config = OUTPUT_TARGET_CONFIGS[target];
+  if (config.directory) {
+    return join(projectDir, config.directory, config.filename);
+  }
+  return join(projectDir, config.filename);
+}
+
+/**
+ * Merge generated instruction file with existing one.
  * Keeps any custom sections from the existing file.
  */
-function mergeClaudeMd(existing: string, generated: string): string {
+function mergeInstructionFile(existing: string, generated: string): string {
   const existingLines = existing.split("\n");
   const generatedLines = generated.split("\n");
 
@@ -134,7 +170,7 @@ function mergeClaudeMd(existing: string, generated: string): string {
   if (customSections.length > 0) {
     return (
       generated +
-      "\n\n<!-- Custom Sections (preserved from previous CLAUDE.md) -->\n\n" +
+      "\n\n<!-- Custom Sections (preserved from previous file) -->\n\n" +
       customSections.join("\n\n")
     );
   }

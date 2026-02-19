@@ -184,7 +184,7 @@ hooks:
 
   - name: code-review
     trigger: pre-commit
-    description: "Claude Code reviews diff against project standards"
+    description: "AI assistant reviews diff against project standards"
     filename: pre-commit-review.sh
     script: |
       #!/bin/bash

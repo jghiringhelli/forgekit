@@ -1,5 +1,5 @@
 tag: WEB3
-section: claude-md
+section: instructions
 blocks:
   - id: smart-contract-patterns
     tier: recommended

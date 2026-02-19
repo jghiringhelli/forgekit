@@ -115,9 +115,9 @@ function generateRecommendations(
 
   const failingChecks = new Set(failing.map((f) => f.check));
 
-  if (failingChecks.has("claude_md_exists")) {
+  if (failingChecks.has("instruction_file_exists")) {
     recommendations.push(
-      "Run `generate_claude_md` to create CLAUDE.md with your project tags.",
+      "Run `generate_instructions` to create instruction files for your AI assistant.",
     );
   }
 

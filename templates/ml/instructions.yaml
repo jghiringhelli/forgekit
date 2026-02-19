@@ -1,5 +1,5 @@
 tag: ML
-section: claude-md
+section: instructions
 blocks:
   - id: training-pipelines
     tier: recommended

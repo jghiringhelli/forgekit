@@ -7,16 +7,16 @@
  */
 
 import { z } from "zod";
-import { existsSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, writeFileSync, mkdirSync } from "node:fs";
+import { join, dirname } from "node:path";
 import yaml from "js-yaml";
-import { ALL_TAGS, CONTENT_TIERS } from "../shared/types.js";
-import type { Tag, ContentTier, ForgeCraftConfig } from "../shared/types.js";
+import { ALL_TAGS, CONTENT_TIERS, ALL_OUTPUT_TARGETS, OUTPUT_TARGET_CONFIGS, DEFAULT_OUTPUT_TARGET } from "../shared/types.js";
+import type { Tag, ContentTier, ForgeCraftConfig, OutputTarget } from "../shared/types.js";
 import { analyzeProject, analyzeDescription } from "../analyzers/package-json.js";
 import { checkCompleteness } from "../analyzers/completeness.js";
 import { loadAllTemplatesWithExtras, loadUserOverrides } from "../registry/loader.js";
 import { composeTemplates } from "../registry/composer.js";
-import { renderClaudeMd } from "../registry/renderer.js";
+import { renderInstructionFile } from "../registry/renderer.js";
 import { createLogger } from "../shared/logger/index.js";
 
 const logger = createLogger("tools/setup-project");
@@ -52,6 +52,10 @@ export const setupProjectSchema = z.object({
     .boolean()
     .default(false)
     .describe("If true, return the setup plan and generated config without writing files."),
+  output_targets: z
+    .array(z.enum(ALL_OUTPUT_TARGETS as unknown as [string, ...string[]]))
+    .default(["claude"])
+    .describe("AI assistant targets to generate instruction files for. Options: claude, cursor, copilot, windsurf, cline, aider. Defaults to ['claude']."),
 });
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -62,7 +66,7 @@ interface SetupAnalysis {
   readonly tagEvidence: Record<string, string[]>;
   readonly existingConfig: ForgeCraftConfig | null;
   readonly completenessGaps: string[];
-  readonly hasClaude: boolean;
+  readonly hasInstructionFile: boolean;
   readonly hasStatusMd: boolean;
   readonly hasHooks: boolean;
 }
@@ -75,6 +79,7 @@ export async function setupProjectHandler(
   const projectDir = args.project_dir;
   const projectName = args.project_name ?? inferProjectName(projectDir);
   const tier = (args.tier ?? "recommended") as ContentTier;
+  const outputTargets = (args.output_targets ?? [DEFAULT_OUTPUT_TARGET]) as OutputTarget[];
 
   logger.info("Setup project starting", { projectDir, tier, dryRun: args.dry_run });
 
@@ -100,27 +105,35 @@ export async function setupProjectHandler(
   const configYaml = yaml.dump(config, { lineWidth: 100, noRefs: true });
 
   if (args.dry_run) {
-    return { content: [{ type: "text", text: buildDryRunOutput(analysis, finalTags, composed, configYaml, tier) }] };
+    return { content: [{ type: "text", text: buildDryRunOutput(analysis, finalTags, composed, configYaml, tier, outputTargets) }] };
   }
 
   // ── Step 7: Write config file ──────────────────────────────────
   const configPath = join(projectDir, "forgecraft.yaml");
   writeFileSync(configPath, configYaml, "utf-8");
 
-  // ── Step 8: Generate CLAUDE.md if needed ───────────────────────
-  const claudeMdPath = join(projectDir, "CLAUDE.md");
+  // ── Step 8: Generate instruction files for all targets ─────────
   const context = { projectName, language: "typescript" as const, tags: finalTags };
-  const claudeContent = renderClaudeMd(composed.claudeMdBlocks, context);
+  const filesWritten: string[] = [];
 
-  let claudeAction: string;
-  if (analysis.hasClaude) {
-    claudeAction = "preserved (use generate_claude_md with merge_with_existing to update)";
-  } else {
-    writeFileSync(claudeMdPath, claudeContent, "utf-8");
-    claudeAction = "created";
+  for (const target of outputTargets) {
+    const targetConfig = OUTPUT_TARGET_CONFIGS[target];
+    const outputPath = targetConfig.directory
+      ? join(projectDir, targetConfig.directory, targetConfig.filename)
+      : join(projectDir, targetConfig.filename);
+
+    if (existsSync(outputPath)) {
+      // Preserve existing instruction files
+      continue;
+    }
+
+    const content = renderInstructionFile(composed.instructionBlocks, context, target);
+    mkdirSync(dirname(outputPath), { recursive: true });
+    writeFileSync(outputPath, content, "utf-8");
+    filesWritten.push(`${targetConfig.directory ? targetConfig.directory + "/" : ""}${targetConfig.filename}`);
   }
 
-  const output = buildSetupOutput(analysis, finalTags, composed, configYaml, tier, claudeAction);
+  const output = buildSetupOutput(analysis, finalTags, composed, configYaml, tier, filesWritten, outputTargets);
   return { content: [{ type: "text", text: output }] };
 }
 
@@ -134,7 +147,15 @@ function analyzeProjectState(
   description?: string,
 ): SetupAnalysis {
   const hasPkgJson = existsSync(join(projectDir, "package.json"));
-  const hasClaude = existsSync(join(projectDir, "CLAUDE.md"));
+  // Check for any known instruction file
+  const hasInstructionFile =
+    existsSync(join(projectDir, "CLAUDE.md")) ||
+    existsSync(join(projectDir, ".cursorrules")) ||
+    existsSync(join(projectDir, ".cursor", "rules")) ||
+    existsSync(join(projectDir, ".github", "copilot-instructions.md")) ||
+    existsSync(join(projectDir, ".windsurfrules")) ||
+    existsSync(join(projectDir, ".clinerules")) ||
+    existsSync(join(projectDir, "CONVENTIONS.md"));
   const hasStatusMd = existsSync(join(projectDir, "Status.md"));
   const hasHooks = existsSync(join(projectDir, ".claude", "hooks"));
   const hasSrcDir = existsSync(join(projectDir, "src"));
@@ -185,7 +206,7 @@ function analyzeProjectState(
     tagEvidence,
     existingConfig,
     completenessGaps,
-    hasClaude,
+    hasInstructionFile,
     hasStatusMd,
     hasHooks,
   };
@@ -261,13 +282,15 @@ function buildDryRunOutput(
   composed: ReturnType<typeof composeTemplates>,
   configYaml: string,
   tier: ContentTier,
+  outputTargets: OutputTarget[],
 ): string {
   let text = `# Setup Plan (Dry Run)\n\n`;
   text += analysis.isNewProject
     ? `**Project Type:** New project\n`
     : `**Project Type:** Existing project\n`;
   text += `**Content Tier:** ${tier}\n`;
-  text += `**Tags:** ${tags.map((t) => `[${t}]`).join(" ")}\n\n`;
+  text += `**Tags:** ${tags.map((t) => `[${t}]`).join(" ")}\n`;
+  text += `**Output Targets:** ${outputTargets.map((t) => OUTPUT_TARGET_CONFIGS[t].displayName).join(", ")}\n\n`;
 
   // Evidence
   if (Object.keys(analysis.tagEvidence).length > 0) {
@@ -280,18 +303,19 @@ function buildDryRunOutput(
 
   // Template summary
   text += `## What Would Be Generated\n`;
-  text += `- CLAUDE.md blocks: ${composed.claudeMdBlocks.length}\n`;
+  text += `- Instruction blocks: ${composed.instructionBlocks.length}\n`;
   text += `- Structure entries: ${composed.structureEntries.length}\n`;
   text += `- NFR sections: ${composed.nfrBlocks.length}\n`;
   text += `- Hooks: ${composed.hooks.length}\n`;
-  text += `- Review checklist blocks: ${composed.reviewBlocks.length}\n\n`;
+  text += `- Review checklist blocks: ${composed.reviewBlocks.length}\n`;
+  text += `- Output targets: ${outputTargets.map((t) => OUTPUT_TARGET_CONFIGS[t].displayName).join(", ")}\n\n`;
 
   // Tier breakdown
   text += `## Content by Tier\n`;
-  const coreMd = composed.claudeMdBlocks.filter((b) => (b.tier ?? "core") === "core").length;
-  const recMd = composed.claudeMdBlocks.filter((b) => b.tier === "recommended").length;
-  const optMd = composed.claudeMdBlocks.filter((b) => b.tier === "optional").length;
-  text += `- CLAUDE.md: ${coreMd} core, ${recMd} recommended, ${optMd} optional\n`;
+  const coreMd = composed.instructionBlocks.filter((b) => (b.tier ?? "core") === "core").length;
+  const recMd = composed.instructionBlocks.filter((b) => b.tier === "recommended").length;
+  const optMd = composed.instructionBlocks.filter((b) => b.tier === "optional").length;
+  text += `- Instruction blocks: ${coreMd} core, ${recMd} recommended, ${optMd} optional\n`;
 
   const coreNfr = composed.nfrBlocks.filter((b) => (b.tier ?? "core") === "core").length;
   const recNfr = composed.nfrBlocks.filter((b) => b.tier === "recommended").length;
@@ -322,18 +346,26 @@ function buildSetupOutput(
   composed: ReturnType<typeof composeTemplates>,
   configYaml: string,
   tier: ContentTier,
-  claudeAction: string,
+  filesWritten: string[],
+  outputTargets: OutputTarget[],
 ): string {
   let text = `# Project Setup Complete\n\n`;
   text += `**Tags:** ${tags.map((t) => `[${t}]`).join(" ")}\n`;
-  text += `**Content Tier:** ${tier}\n\n`;
+  text += `**Content Tier:** ${tier}\n`;
+  text += `**Targets:** ${outputTargets.map((t) => OUTPUT_TARGET_CONFIGS[t].displayName).join(", ")}\n\n`;
 
   text += `## Files Written\n`;
   text += `- forgecraft.yaml — project configuration\n`;
-  text += `- CLAUDE.md — ${claudeAction}\n\n`;
+  for (const f of filesWritten) {
+    text += `- ${f} — created\n`;
+  }
+  if (filesWritten.length === 0) {
+    text += `- (instruction files preserved — use generate_instructions with merge_with_existing to update)\n`;
+  }
+  text += "\n";
 
   text += `## Template Summary\n`;
-  text += `- ${composed.claudeMdBlocks.length} CLAUDE.md blocks applied\n`;
+  text += `- ${composed.instructionBlocks.length} instruction blocks applied\n`;
   text += `- ${composed.nfrBlocks.length} NFR sections available\n`;
   text += `- ${composed.hooks.length} hooks available\n`;
   text += `- ${composed.reviewBlocks.length} review checklist blocks available\n\n`;
@@ -353,13 +385,14 @@ function buildSetupOutput(
   }
   steps.push("Adjust forgecraft.yaml to add/exclude specific content blocks");
   steps.push("Use `refresh_project` later if project scope changes");
+  steps.push("Add more output targets in forgecraft.yaml (cursor, copilot, windsurf, cline, aider)");
 
   if (tier === "core") {
     steps.push("Upgrade tier to 'recommended' when ready for more patterns: edit forgecraft.yaml");
   }
 
   text += steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
-  text += `\n\n⚠️ **Restart required** to pick up CLAUDE.md changes.`;
+  text += `\n\n⚠️ **Restart may be required** to pick up instruction file changes.`;
 
   return text;
 }
