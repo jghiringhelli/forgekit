@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.jghiringhelli/forgecraft",
-  "description": "Production-grade CLAUDE.md generation with SOLID, testing, and architecture standards.",
+  "description": "Production-grade AI assistant instructions with SOLID, testing, and architecture standards.",
   "repository": {
     "url": "https://github.com/jghiringhelli/forgecraft-mcp",
     "source": "github"
   },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "forgecraft-mcp",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "transport": {
         "type": "stdio"
       }
