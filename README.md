@@ -421,7 +421,7 @@ Running this with a team? → [forgeworkshop.dev](https://forgeworkshop.dev)
 
 ForgeCraft implements the **Generative Specification** model — a formal 7-property framework for evaluating AI-generated code quality. The model, the S_realized convergence formula, and the release phase framework are documented in the white paper.
 
-> [Generative Specification: A Pragmatic Programming Paradigm for the Stateless Reader](https://doi.org/10.5281/zenodo.19637142) — Zenodo (V3, April 2026). Open access, DOI: `10.5281/zenodo.19637142`. The academic foundation behind the `verify` score.
+> [Generative Specification: A Discipline of Derivability for the Stateless Reader](https://doi.org/10.5281/zenodo.21726017) — Zenodo (V4.0, 2026). Open access, DOI: `10.5281/zenodo.21726017`. The academic foundation behind the `verify` score.
 
 The white paper is the theory. ForgeCraft is the toolchain. Quality gates proposed for the library that generalize into theoretical insights may be incorporated into future white paper revisions.
 
@@ -604,3 +604,14 @@ npm test   # 610 tests, 42 suites
 ## License
 
 MIT
+
+
+---
+
+## Part of Generative Specification
+
+A free tool behind **Generative Specification (GS)** — the discipline for building software with AI that doesn't drift: you author a specification precise enough that a stateless AI derives correct code from it, and a harness verifies it against a live system.
+
+- 📄 **White paper** (open access): https://doi.org/10.5281/zenodo.21726017
+- 🧭 **Start here** — method, tools, testimonials: https://pragmaworks.dev
+- 🔨 **The Forge** — 2-day hands-on GS workshop for your team: https://forgeworkshop.dev
